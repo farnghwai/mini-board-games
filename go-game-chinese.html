@@ -1,0 +1,2027 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>圍棋 - 與小克對弈</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "微軟正黑體", sans-serif;
+            background: linear-gradient(135deg, #f5f5dc 0%, #e8ddc0 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            touch-action: manipulation;
+        }
+
+        #gameContainer {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #welcomeScreen {
+            text-align: center;
+            padding: 30px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .welcomeTitle {
+            font-size: 28px;
+            color: #4a4a4a;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .welcomeMessage {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .startButton {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 15px 40px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .startButton:active {
+            transform: scale(0.95);
+        }
+
+        #gameScreen {
+            display: none;
+        }
+
+        #messageArea {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #aiMessage {
+            font-size: 18px;
+            color: #4a4a4a;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        #boardContainer {
+            background: #deb887;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            position: relative;
+            transition: background 0.3s ease;
+        }
+        
+        #boardContainer.easy-mode {
+            background: linear-gradient(135deg, #d4c5a9 0%, #deb887 100%);
+        }
+        
+        #boardContainer.medium-mode {
+            background: #deb887;
+        }
+        
+        #boardContainer.hard-mode {
+            background: linear-gradient(135deg, #deb887 0%, #cd9b5e 100%);
+        }
+
+        #board {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            background: #f4d03f;
+            background-image: 
+                repeating-linear-gradient(0deg, #d4a76a 0, #d4a76a 1px, transparent 1px, transparent 100%),
+                repeating-linear-gradient(90deg, #d4a76a 0, #d4a76a 1px, transparent 1px, transparent 100%);
+            border-radius: 5px;
+        }
+
+        .intersection {
+            position: absolute;
+            width: 7.69%;
+            height: 7.69%;
+            cursor: pointer;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stone {
+            width: 90%;
+            height: 90%;
+            border-radius: 50%;
+            position: relative;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .stone.black {
+            background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .stone.white {
+            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            border: 1px solid #ccc;
+        }
+
+        .stone.preview {
+            opacity: 0.5;
+        }
+
+        .stone.last-move::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40%;
+            height: 40%;
+            border-radius: 50%;
+            background: rgba(255, 0, 0, 0.6);
+        }
+
+        .star-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #2a2a2a;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        #gameInfo {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            border-radius: 15px;
+            padding: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        #settingsBar {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            background: white;
+            border-radius: 15px;
+            padding: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        .settingGroup {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settingLabel {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .toggleButton {
+            background: #f0f0f0;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggleButton.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .difficultySelector {
+            display: flex;
+            gap: 5px;
+            background: #f8f8f8;
+            padding: 3px;
+            border-radius: 18px;
+        }
+
+        .difficultyButton {
+            background: transparent;
+            border: none;
+            border-radius: 12px;
+            padding: 6px 12px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .difficultyButton:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .difficultyButton.active {
+            background: linear-gradient(135deg, #ffd89b 0%, #ffa751 100%);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(255, 167, 81, 0.3);
+        }
+
+        .difficultyButton:active {
+            transform: scale(0.95);
+        }
+
+        #board.no-grid {
+            background-image: none;
+            background: #f4d03f;
+        }
+
+        #board.no-grid .gridLine {
+            display: block;
+        }
+
+        #board:not(.no-grid) .gridLine {
+            display: none;
+        }
+
+        .gridLine {
+            position: absolute;
+            background: #d4a76a;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.5;
+        }
+
+        .gridLine.horizontal {
+            width: 100%;
+            height: 1px;
+        }
+
+        .gridLine.vertical {
+            width: 1px;
+            height: 100%;
+        }
+
+        .infoItem {
+            text-align: center;
+        }
+
+        .infoLabel {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .infoValue {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4a4a4a;
+        }
+
+        #controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .controlButton {
+            flex: 1;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            padding: 12px;
+            font-size: 18px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .controlButton:active {
+            background: #f0f0f0;
+            transform: scale(0.95);
+        }
+
+        .controlButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .controlButton.pass {
+            background: linear-gradient(135deg, #ffd89b 0%, #ffa751 100%);
+            border: none;
+            color: white;
+            font-weight: bold;
+        }
+
+        .controlButton.resign {
+            background: linear-gradient(135deg, #ff9b9b 0%, #ff5151 100%);
+            border: none;
+            color: white;
+            font-weight: bold;
+        }
+
+        #endGameModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modalContent {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modalTitle {
+            font-size: 28px;
+            color: #4a4a4a;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .modalScore {
+            font-size: 22px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .modalMessage {
+            font-size: 18px;
+            color: #888;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .scoreDetails {
+            background: #f8f8f8;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .scoreDetail {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 16px;
+        }
+
+        .scoreDetail:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #ccc;
+        }
+
+        .scoreDetail.black {
+            color: #000;
+        }
+
+        .scoreDetail.white {
+            color: #666;
+        }
+
+        .detailLabel {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .detailValue {
+            font-weight: 500;
+        }
+
+        .expandButton {
+            background: #f0f0f0;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #666;
+            cursor: pointer;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .expandButton:active {
+            background: #e0e0e0;
+        }
+
+        .expandButton::after {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+
+        .expandButton.expanded::after {
+            transform: rotate(180deg);
+        }
+
+        .explanationSection {
+            display: none;
+            background: #fffbf0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+            border: 2px solid #f0e0c0;
+        }
+
+        .explanationSection.show {
+            display: block;
+        }
+
+        .explanationTitle {
+            font-size: 20px;
+            color: #4a4a4a;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .explanationContent {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .explanationContent p {
+            margin-bottom: 12px;
+        }
+
+        .explanationContent strong {
+            color: #4a4a4a;
+            font-weight: 600;
+        }
+
+        .territoryOverlay {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            opacity: 0.4;
+            z-index: 2;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .territoryOverlay.black-territory {
+            background: radial-gradient(circle, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 100%);
+            box-shadow: 0 0 3px rgba(0,0,0,0.3);
+        }
+
+        .territoryOverlay.white-territory {
+            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
+            border: 1px solid rgba(200,200,200,0.8);
+            box-shadow: 0 0 3px rgba(255,255,255,0.5);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 0.4; transform: scale(1); }
+        }
+
+        .modalButtons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .modalButton {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 15px;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .modalButton.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+
+        .modalButton.secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .modalButton:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 380px) {
+            .welcomeTitle { font-size: 24px; }
+            .welcomeMessage { font-size: 18px; }
+            .startButton { font-size: 20px; }
+            #aiMessage { font-size: 16px; }
+            .infoValue { font-size: 18px; }
+            .controlButton { font-size: 16px; }
+            .settingLabel { font-size: 12px; }
+            .toggleButton { padding: 5px 10px; font-size: 13px; }
+            .difficultyButton { padding: 5px 8px; font-size: 12px; }
+            .difficultySelector { gap: 3px; padding: 2px; }
+            .difficultyHint { font-size: 10px; }
+            #settingsBar { flex-direction: column; gap: 8px; }
+            .settingGroup { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="welcomeScreen">
+            <h1 class="welcomeTitle">歡迎來到圍棋世界</h1>
+            <p class="welcomeMessage">您好！我是棋友小克！<br>讓我們一起享受下棋的樂趣吧！</p>
+            <button class="startButton" onclick="startGame()">開始下棋</button>
+        </div>
+
+        <div id="gameScreen">
+            <div id="messageArea">
+                <div id="aiMessage">您執黑子，請先下！觸碰任何交叉點落子。</div>
+            </div>
+
+            <div id="settingsBar">
+                <div class="settingGroup">
+                    <span class="settingLabel">格線：</span>
+                    <button class="toggleButton active" id="gridToggle" onclick="toggleGrid()">開啟</button>
+                </div>
+                <div class="settingGroup">
+                    <span class="settingLabel">難度：</span>
+                    <div class="difficultyWrapper">
+                        <div class="difficultySelector">
+                            <button class="difficultyButton active" onclick="changeDifficulty('easy')">簡單</button>
+                            <button class="difficultyButton" onclick="changeDifficulty('medium')">中等</button>
+                            <button class="difficultyButton" onclick="changeDifficulty('hard')">困難</button>
+                        </div>
+                        <div class="difficultyHint" id="difficultyHint" style="font-size: 11px; color: #4CAF50; text-align: center; margin-top: 4px;">和平建設</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="boardContainer">
+                <div id="board"></div>
+            </div>
+
+            <div id="gameInfo">
+                <div class="infoItem">
+                    <div class="infoLabel">黑子擒獲</div>
+                    <div class="infoValue">⚫ <span id="blackCaptures">0</span></div>
+                </div>
+                <div class="infoItem">
+                    <div class="infoLabel">白子擒獲</div>
+                    <div class="infoValue">⚪ <span id="whiteCaptures">0</span></div>
+                </div>
+            </div>
+
+            <div id="controls">
+                <button class="controlButton" onclick="undoMove()">悔棋</button>
+                <button class="controlButton pass" onclick="playerPass()">虛手</button>
+                <button class="controlButton resign" id="resignButton" style="display:none;" onclick="confirmResign()">認輸</button>
+            </div>
+        </div>
+
+        <div id="endGameModal">
+            <div class="modalContent">
+                <h2 class="modalTitle">對局結束</h2>
+                <div class="modalScore" id="finalScore"></div>
+                <p style="font-size: 14px; color: #999; margin: -10px 0 15px 0;">（棋盤上已標示領地）</p>
+                
+                <button class="expandButton" onclick="toggleExplanation()">
+                    瞭解計分方式
+                </button>
+                
+                <div class="explanationSection" id="explanationSection">
+                    <div class="explanationTitle">📚 圍棋計分說明</div>
+                    <div class="explanationContent">
+                        <p><strong>圍棋的目標：</strong><br>
+                        佔領更多的地盤（空地）！不只是吃子喔。</p>
+                        
+                        <p><strong>如何計算分數：</strong><br>
+                        🏠 <strong>領地</strong>：您圍住的空地，每格算1分<br>
+                        ⚫ <strong>活棋</strong>：棋盤上您的棋子，每顆算1分<br>
+                        🎯 <strong>提子</strong>：吃掉對方的棋子，每顆算1分</p>
+                        
+                        <p><strong>貼目是什麼？</strong><br>
+                        因為黑棋先下有優勢，所以白棋會得到6.5分補償，讓遊戲更公平。</p>
+                        
+                        <p><strong>誰贏了？</strong><br>
+                        總分高的一方獲勝！就這麼簡單。</p>
+                    </div>
+                </div>
+                
+                <div class="scoreDetails">
+                    <div class="scoreDetail black">
+                        <span class="detailLabel">⚫ 黑子計分</span>
+                        <span class="detailValue"></span>
+                    </div>
+                    <div class="scoreDetail black" id="blackTerritory">
+                        <span class="detailLabel">　　領地</span>
+                        <span class="detailValue">0 格</span>
+                    </div>
+                    <div class="scoreDetail black" id="blackStones">
+                        <span class="detailLabel">　　活棋</span>
+                        <span class="detailValue">0 子</span>
+                    </div>
+                    <div class="scoreDetail black" id="blackCaptured">
+                        <span class="detailLabel">　　提子</span>
+                        <span class="detailValue">0 個</span>
+                    </div>
+                    <div class="scoreDetail black">
+                        <span class="detailLabel"><strong>黑子總分</strong></span>
+                        <span class="detailValue" id="blackTotal"><strong>0</strong></span>
+                    </div>
+                    
+                    <div style="margin: 15px 0;"></div>
+                    
+                    <div class="scoreDetail white">
+                        <span class="detailLabel">⚪ 白子計分</span>
+                        <span class="detailValue"></span>
+                    </div>
+                    <div class="scoreDetail white" id="whiteTerritory">
+                        <span class="detailLabel">　　領地</span>
+                        <span class="detailValue">0 格</span>
+                    </div>
+                    <div class="scoreDetail white" id="whiteStones">
+                        <span class="detailLabel">　　活棋</span>
+                        <span class="detailValue">0 子</span>
+                    </div>
+                    <div class="scoreDetail white" id="whiteCaptured">
+                        <span class="detailLabel">　　提子</span>
+                        <span class="detailValue">0 個</span>
+                    </div>
+                    <div class="scoreDetail white" id="whiteKomi">
+                        <span class="detailLabel">　　貼目</span>
+                        <span class="detailValue">6.5 分</span>
+                    </div>
+                    <div class="scoreDetail white">
+                        <span class="detailLabel"><strong>白子總分</strong></span>
+                        <span class="detailValue" id="whiteTotal"><strong>0</strong></span>
+                    </div>
+                </div>
+                
+                <div class="modalMessage" id="endMessage"></div>
+                <div class="modalButtons">
+                    <button class="modalButton primary" onclick="newGame()">再來一局</button>
+                    <button class="modalButton secondary" onclick="takeBreak()">休息一下</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BOARD_SIZE = 13;
+        const EMPTY = 0;
+        const BLACK = 1;
+        const WHITE = 2;
+
+        let board = [];
+        let currentPlayer = BLACK;
+        let gameStarted = false;
+        let blackCaptures = 0;
+        let whiteCaptures = 0;
+        let koPosition = null;
+        let lastMove = null;
+        let moveHistory = [];
+        let passCount = 0;
+        let gameCount = 0;
+        let winCount = 0;
+        let lossCount = 0;
+        let gridEnabled = true;
+        let difficulty = 'easy'; // easy, medium, hard
+        let difficultyAdjustment = true; // Auto-adjust difficulty based on performance
+
+        const aiMessages = {
+            opening: [
+                "您的佈局很好！",
+                "搶占角落，高明！",
+                "我也要佔個好位置",
+                "有趣的開局！",
+                "這步棋很穩健"
+            ],
+            middle: [
+                "激烈的戰鬥！",
+                "這步棋很巧妙",
+                "我得小心了",
+                "局勢越來越有趣了",
+                "您的進攻很猛烈！"
+            ],
+            capture: [
+                "哎呀，我的棋子！",
+                "漂亮的吃子！",
+                "我要報仇！",
+                "您抓住了好時機！",
+                "真是精彩的手筋！"
+            ],
+            endgame: [
+                "快分出勝負了",
+                "這盤棋真精彩",
+                "最後幾步了",
+                "收官階段了",
+                "勝負即將揭曉"
+            ],
+            encourage: [
+                "不錯！繼續加油！",
+                "您進步很多！",
+                "這步棋有想法！",
+                "您越下越好了！",
+                "真是好棋！"
+            ],
+            difficulty: {
+                easy: ["我喜歡和平的下棋", "讓我們各自建立地盤吧", "我不太喜歡打架"],
+                medium: ["我會好好和您較量", "讓我們互相學習", "這局會很有意思"],
+                hard: ["我要全力進攻！", "準備好激烈的戰鬥了嗎？", "每個子都要爭奪！"]
+            },
+            peaceful: [
+                "我在角落建立基地",
+                "這邊很安全",
+                "我喜歡穩定的形狀",
+                "慢慢擴展領地",
+                "和平發展最好"
+            ],
+            aggressive: [
+                "我要切斷您的棋！",
+                "進攻開始了！",
+                "這裡會很激烈",
+                "不讓您安心做棋",
+                "戰鬥！戰鬥！",
+                "您的棋子危險了！",
+                "我要入侵這裡！",
+                "別想輕鬆建地盤！",
+                "每一步都是戰鬥！",
+                "看我怎麼攻破您的防線！"
+            ],
+            hardKill: [
+                "叫吃！您的棋子要被吃了！",
+                "哈哈！抓住了！",
+                "這群棋子跑不掉了！",
+                "看您怎麼救！",
+                "您的大龍危險了！"
+            ]
+        };
+
+        function initBoard() {
+            board = [];
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                board[i] = [];
+                for (let j = 0; j < BOARD_SIZE; j++) {
+                    board[i][j] = EMPTY;
+                }
+            }
+            blackCaptures = 0;
+            whiteCaptures = 0;
+            koPosition = null;
+            lastMove = null;
+            moveHistory = [];
+            passCount = 0;
+            currentPlayer = BLACK;
+            updateCaptures();
+        }
+
+        function createBoard() {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+
+            // Apply grid class
+            if (gridEnabled) {
+                boardElement.classList.remove('no-grid');
+            } else {
+                boardElement.classList.add('no-grid');
+            }
+
+            // Always add grid lines (controlled by CSS opacity)
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                // Horizontal lines
+                const hLine = document.createElement('div');
+                hLine.className = 'gridLine horizontal';
+                hLine.style.top = `${(i / 12) * 100}%`;
+                boardElement.appendChild(hLine);
+                
+                // Vertical lines
+                const vLine = document.createElement('div');
+                vLine.className = 'gridLine vertical';
+                vLine.style.left = `${(i / 12) * 100}%`;
+                boardElement.appendChild(vLine);
+            }
+
+            // Add star points
+            const starPoints = [
+                [3, 3], [3, 9], [6, 6], [9, 3], [9, 9]
+            ];
+            
+            starPoints.forEach(([row, col]) => {
+                const star = document.createElement('div');
+                star.className = 'star-point';
+                star.style.left = `${(col / 12) * 100}%`;
+                star.style.top = `${(row / 12) * 100}%`;
+                boardElement.appendChild(star);
+            });
+
+            // Create intersections
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                for (let j = 0; j < BOARD_SIZE; j++) {
+                    const intersection = document.createElement('div');
+                    intersection.className = 'intersection';
+                    intersection.style.left = `${(j / 12) * 100 - 3.845}%`;
+                    intersection.style.top = `${(i / 12) * 100 - 3.845}%`;
+                    intersection.dataset.row = i;
+                    intersection.dataset.col = j;
+                    
+                    intersection.addEventListener('click', handleIntersectionClick);
+                    intersection.addEventListener('touchstart', handleTouch, {passive: true});
+                    intersection.addEventListener('touchend', handleTouchEnd, {passive: false});
+                    
+                    boardElement.appendChild(intersection);
+                }
+            }
+        }
+
+        function toggleGrid() {
+            gridEnabled = !gridEnabled;
+            const toggleButton = document.getElementById('gridToggle');
+            const boardElement = document.getElementById('board');
+            
+            if (gridEnabled) {
+                toggleButton.classList.add('active');
+                toggleButton.textContent = '開啟';
+                boardElement.classList.remove('no-grid');
+            } else {
+                toggleButton.classList.remove('active');
+                toggleButton.textContent = '關閉';
+                boardElement.classList.add('no-grid');
+            }
+        }
+
+        function updateBoardStyle() {
+            const boardContainer = document.getElementById('boardContainer');
+            if (!boardContainer) return; // Safety check
+            
+            // Remove all mode classes
+            boardContainer.classList.remove('easy-mode', 'medium-mode', 'hard-mode');
+            
+            // Add the appropriate mode class
+            if (difficulty === 'easy') {
+                boardContainer.classList.add('easy-mode');
+            } else if (difficulty === 'medium') {
+                boardContainer.classList.add('medium-mode');
+            } else {
+                boardContainer.classList.add('hard-mode');
+            }
+        }
+
+        function changeDifficulty(level) {
+            difficulty = level;
+            
+            // Update all button states
+            document.querySelectorAll('.difficultyButton').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Set active button based on level
+            if (level === 'easy') {
+                document.querySelectorAll('.difficultyButton')[0].classList.add('active');
+            } else if (level === 'medium') {
+                document.querySelectorAll('.difficultyButton')[1].classList.add('active');
+            } else if (level === 'hard') {
+                document.querySelectorAll('.difficultyButton')[2].classList.add('active');
+            }
+            
+            // Update hint text - directly set it based on level
+            const hintElement = document.getElementById('difficultyHint');
+            if (level === 'easy') {
+                hintElement.textContent = '和平建設';
+                hintElement.style.color = '#4CAF50'; // Green
+            } else if (level === 'medium') {
+                hintElement.textContent = '攻守平衡';
+                hintElement.style.color = '#FF9800'; // Orange
+            } else if (level === 'hard') {
+                hintElement.textContent = '激烈戰鬥';
+                hintElement.style.color = '#F44336'; // Red
+            }
+            
+            // Update board style
+            updateBoardStyle();
+            
+            // Show personality message with extreme descriptions
+            let personalityMessage = "";
+            if (level === 'easy') {
+                personalityMessage = "和平模式：我會躲在角落建設，絕對不會主動攻擊您";
+            } else if (level === 'medium') {
+                personalityMessage = "平衡模式：我會攻守兼備，看準時機進攻";
+            } else if (level === 'hard') {
+                personalityMessage = "戰鬥狂模式：我會瘋狂進攻！每一手都在找機會殺您的棋！";
+            }
+            
+            showMessage(personalityMessage);
+            
+            // Turn off auto-adjustment when manually set
+            difficultyAdjustment = false;
+        }
+
+        function setDifficulty(level) {
+            difficulty = level;
+            
+            // Update button states
+            document.querySelectorAll('.difficultyButton').forEach(btn => {
+                btn.classList.remove('active');
+                if ((level === 'easy' && btn.textContent === '簡單') ||
+                    (level === 'medium' && btn.textContent === '中等') ||
+                    (level === 'hard' && btn.textContent === '困難')) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Show personality-based message
+            let personalityMessage = "";
+            if (level === 'easy') {
+                personalityMessage = "我會和平地建立自己的地盤，不太會攻擊您";
+            } else if (level === 'medium') {
+                personalityMessage = "我會平衡進攻和防守，尋找好機會";
+            } else {
+                personalityMessage = "我會積極進攻，每個地方都要戰鬥！";
+            }
+            
+            showMessage(personalityMessage);
+            
+            // Turn off auto-adjustment when manually set
+            difficultyAdjustment = false;
+        }
+
+        function adjustDifficultyAutomatically() {
+            if (!difficultyAdjustment) return;
+            
+            // Auto-adjust based on win/loss ratio
+            const totalGames = winCount + lossCount;
+            if (totalGames >= 3) {
+                const winRate = winCount / totalGames;
+                
+                if (winRate > 0.7 && difficulty !== 'hard') {
+                    // Player winning too much, increase difficulty
+                    if (difficulty === 'easy') {
+                        setDifficultyLevel('medium');
+                        setTimeout(() => showMessage("您很厲害！下一局我會更主動進攻"), 2000);
+                    } else if (difficulty === 'medium') {
+                        setDifficultyLevel('hard');
+                        setTimeout(() => showMessage("您真是高手！下一局我要全力戰鬥了！"), 2000);
+                    }
+                    difficultyAdjustment = true; // Keep auto-adjustment on
+                } else if (winRate < 0.3 && difficulty !== 'easy') {
+                    // Player losing too much, decrease difficulty
+                    if (difficulty === 'hard') {
+                        setDifficultyLevel('medium');
+                        setTimeout(() => showMessage("我太兇猛了，下一局溫和一點"), 2000);
+                    } else if (difficulty === 'medium') {
+                        setDifficultyLevel('easy');
+                        setTimeout(() => showMessage("讓我們和平地下棋，各自發展"), 2000);
+                    }
+                    difficultyAdjustment = true; // Keep auto-adjustment on
+                }
+            }
+        }
+
+        function setDifficultyLevel(level) {
+            difficulty = level;
+            
+            // Update button states
+            document.querySelectorAll('.difficultyButton').forEach(btn => {
+                btn.classList.remove('active');
+                if ((level === 'easy' && btn.textContent === '簡單') ||
+                    (level === 'medium' && btn.textContent === '中等') ||
+                    (level === 'hard' && btn.textContent === '困難')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        let touchedIntersection = null;
+
+        function handleTouch(e) {
+            const intersection = e.currentTarget;
+            const row = parseInt(intersection.dataset.row);
+            const col = parseInt(intersection.dataset.col);
+            
+            if (currentPlayer === BLACK && board[row][col] === EMPTY) {
+                touchedIntersection = intersection;
+                showPreview(intersection, row, col);
+            }
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            if (touchedIntersection) {
+                const row = parseInt(touchedIntersection.dataset.row);
+                const col = parseInt(touchedIntersection.dataset.col);
+                removePreview(touchedIntersection);
+                placeStone(row, col);
+                touchedIntersection = null;
+            }
+        }
+
+        function showPreview(intersection, row, col) {
+            if (board[row][col] === EMPTY && currentPlayer === BLACK) {
+                const stone = document.createElement('div');
+                stone.className = 'stone black preview';
+                intersection.appendChild(stone);
+            }
+        }
+
+        function removePreview(intersection) {
+            const preview = intersection.querySelector('.preview');
+            if (preview) {
+                preview.remove();
+            }
+        }
+
+        function handleIntersectionClick(e) {
+            const intersection = e.currentTarget;
+            const row = parseInt(intersection.dataset.row);
+            const col = parseInt(intersection.dataset.col);
+            
+            if (currentPlayer === BLACK) {
+                placeStone(row, col);
+            }
+        }
+
+        function placeStone(row, col) {
+            if (!gameStarted || currentPlayer !== BLACK) return;
+            if (board[row][col] !== EMPTY) return;
+            
+            // Check ko rule
+            if (koPosition && koPosition.row === row && koPosition.col === col) {
+                showMessage("那裡不能下喔，試試其他地方！");
+                return;
+            }
+
+            // Try placing the stone
+            board[row][col] = BLACK;
+            
+            // Check for captures
+            const captures = checkCaptures(row, col, WHITE);
+            
+            // Check for suicide
+            if (!hasLiberties(row, col, BLACK) && captures.length === 0) {
+                board[row][col] = EMPTY;
+                showMessage("那裡不能下喔，試試其他地方！");
+                return;
+            }
+
+            // Valid move
+            passCount = 0;
+            
+            // Handle captures
+            if (captures.length > 0) {
+                captures.forEach(([r, c]) => {
+                    board[r][c] = EMPTY;
+                    blackCaptures++;
+                });
+                
+                // Check for ko
+                if (captures.length === 1 && !hasLiberties(row, col, BLACK)) {
+                    koPosition = { row: captures[0][0], col: captures[0][1] };
+                } else {
+                    koPosition = null;
+                }
+                
+                updateCaptures();
+                showMessage(getRandomMessage('capture'));
+            } else {
+                koPosition = null;
+                const moveCount = moveHistory.length;
+                if (moveCount < 10) {
+                    showMessage(getRandomMessage('opening'));
+                } else if (moveCount < 50) {
+                    showMessage(getRandomMessage('middle'));
+                } else {
+                    showMessage(getRandomMessage('endgame'));
+                }
+            }
+
+            lastMove = { row, col };
+            moveHistory.push({ row, col, player: BLACK });
+            renderBoard();
+            currentPlayer = WHITE;
+            
+            setTimeout(makeAIMove, 1000);
+        }
+
+        function hasLiberties(row, col, color) {
+            const visited = new Set();
+            return checkGroupLiberties(row, col, color, visited) > 0;
+        }
+
+        function checkGroupLiberties(row, col, color, visited) {
+            if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) return 0;
+            
+            const key = `${row},${col}`;
+            if (visited.has(key)) return 0;
+            
+            if (board[row][col] === EMPTY) return 1;
+            if (board[row][col] !== color) return 0;
+            
+            visited.add(key);
+            
+            let liberties = 0;
+            const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
+            
+            for (const [dr, dc] of neighbors) {
+                liberties += checkGroupLiberties(row + dr, col + dc, color, visited);
+            }
+            
+            return liberties;
+        }
+
+        function checkCaptures(row, col, opponentColor) {
+            const captures = [];
+            const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
+            
+            for (const [dr, dc] of neighbors) {
+                const newRow = row + dr;
+                const newCol = col + dc;
+                
+                if (newRow >= 0 && newRow < BOARD_SIZE && 
+                    newCol >= 0 && newCol < BOARD_SIZE &&
+                    board[newRow][newCol] === opponentColor) {
+                    
+                    if (!hasLiberties(newRow, newCol, opponentColor)) {
+                        const group = getGroup(newRow, newCol, opponentColor);
+                        captures.push(...group);
+                    }
+                }
+            }
+            
+            return captures;
+        }
+
+        function getGroup(row, col, color) {
+            const group = [];
+            const visited = new Set();
+            const stack = [[row, col]];
+            
+            while (stack.length > 0) {
+                const [r, c] = stack.pop();
+                const key = `${r},${c}`;
+                
+                if (visited.has(key)) continue;
+                visited.add(key);
+                
+                if (board[r][c] === color) {
+                    group.push([r, c]);
+                    
+                    const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
+                    for (const [dr, dc] of neighbors) {
+                        const newRow = r + dr;
+                        const newCol = c + dc;
+                        if (newRow >= 0 && newRow < BOARD_SIZE && 
+                            newCol >= 0 && newCol < BOARD_SIZE) {
+                            stack.push([newRow, newCol]);
+                        }
+                    }
+                }
+            }
+            
+            return group;
+        }
+
+        function evaluateMove(row, col, color) {
+            // Advanced move evaluation for better AI
+            let score = 0;
+            
+            // Check captures
+            const captures = checkCaptures(row, col, color === WHITE ? BLACK : WHITE);
+            score += captures.length * 50;
+            
+            // Count liberties after the move
+            board[row][col] = color;
+            const liberties = countGroupLiberties(row, col, color);
+            board[row][col] = EMPTY;
+            score += liberties * 5;
+            
+            // Distance from edges (center is often strategic in middle game)
+            const distFromEdge = Math.min(row, col, BOARD_SIZE - 1 - row, BOARD_SIZE - 1 - col);
+            
+            // Opening strategy - corners and sides
+            if (moveHistory.length < 15) {
+                if ((row <= 3 || row >= 9) && (col <= 3 || col >= 9)) {
+                    score += 25; // Corner area
+                }
+                if (row <= 1 || row >= 11 || col <= 1 || col >= 11) {
+                    score += 15; // Edge area
+                }
+            } else {
+                // Middle game - balance center and sides
+                score += distFromEdge * 2;
+            }
+            
+            // Connection to friendly stones
+            const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
+            let friendlyNeighbors = 0;
+            let enemyNeighbors = 0;
+            
+            for (const [dr, dc] of neighbors) {
+                const nr = row + dr;
+                const nc = col + dc;
+                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                    if (board[nr][nc] === color) friendlyNeighbors++;
+                    else if (board[nr][nc] !== EMPTY) enemyNeighbors++;
+                }
+            }
+            
+            score += friendlyNeighbors * 8;
+            
+            // Check if move threatens enemy groups
+            for (const [dr, dc] of neighbors) {
+                const nr = row + dr;
+                const nc = col + dc;
+                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                    if (board[nr][nc] === (color === WHITE ? BLACK : WHITE)) {
+                        // Temporarily place stone to check enemy liberties
+                        board[row][col] = color;
+                        const enemyLiberties = countGroupLiberties(nr, nc, board[nr][nc]);
+                        board[row][col] = EMPTY;
+                        
+                        if (enemyLiberties === 1) score += 40; // Atari!
+                        else if (enemyLiberties === 2) score += 20; // Threatening
+                    }
+                }
+            }
+            
+            return score;
+        }
+
+        function countGroupLiberties(row, col, color) {
+            const visited = new Set();
+            const liberties = new Set();
+            
+            function explore(r, c) {
+                if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) return;
+                
+                const key = `${r},${c}`;
+                if (visited.has(key)) return;
+                
+                if (board[r][c] === EMPTY) {
+                    liberties.add(key);
+                    return;
+                }
+                
+                if (board[r][c] !== color) return;
+                
+                visited.add(key);
+                
+                const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
+                for (const [dr, dc] of neighbors) {
+                    explore(r + dr, c + dc);
+                }
+            }
+            
+            explore(row, col);
+            return liberties.size;
+        }
+
+        function makeAIMove() {
+            if (!gameStarted || currentPlayer !== WHITE) return;
+
+            const validMoves = [];
+            
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                for (let j = 0; j < BOARD_SIZE; j++) {
+                    if (board[i][j] === EMPTY) {
+                        // Check if move is legal
+                        board[i][j] = WHITE;
+                        const captures = checkCaptures(i, j, BLACK);
+                        const wouldBeSuicide = !hasLiberties(i, j, WHITE) && captures.length === 0;
+                        const isKo = koPosition && koPosition.row === i && koPosition.col === j;
+                        
+                        if (!wouldBeSuicide && !isKo) {
+                            // Calculate score based on difficulty
+                            let score = evaluateMove(i, j, WHITE);
+                            
+                            // Difficulty-based adjustments
+                            if (difficulty === 'easy') {
+                                // Easy mode: Peaceful, avoid confrontation
+                                // Prefer empty corners and building territory
+                                const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
+                                let hasEnemyNeighbor = false;
+                                for (const [dr, dc] of neighbors) {
+                                    const nr = i + dr;
+                                    const nc = j + dc;
+                                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                                        if (board[nr][nc] === BLACK) {
+                                            hasEnemyNeighbor = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                if (hasEnemyNeighbor) {
+                                    score -= 30; // Avoid playing near opponent
+                                }
+                                
+                                // Strongly prefer corners and peaceful areas
+                                if ((i <= 2 || i >= 10) && (j <= 2 || j >= 10)) {
+                                    score += 40;
+                                }
+                                
+                                // Add more randomness
+                                score += Math.random() * 20;
+                                
+                            } else if (difficulty === 'medium') {
+                                // Medium mode: Balanced play
+                                // Standard evaluation with some randomness
+                                score += Math.random() * 10;
+                                
+                            } else if (difficulty === 'hard') {
+                                // Hard mode: Aggressive, seeks fights
+                                // Look for cutting and attacking moves
+                                const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
+                                
+                                // Bonus for playing near opponent stones
+                                for (const [dr, dc] of neighbors) {
+                                    const nr = i + dr;
+                                    const nc = j + dc;
+                                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                                        if (board[nr][nc] === BLACK) {
+                                            score += 25; // Seek contact
+                                            
+                                            // Check if we can reduce their liberties
+                                            board[i][j] = WHITE;
+                                            const enemyLibs = countGroupLiberties(nr, nc, BLACK);
+                                            board[i][j] = EMPTY;
+                                            
+                                            if (enemyLibs <= 2) {
+                                                score += 50; // Attack weak groups
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Look for cutting points
+                                let blackDiagonals = 0;
+                                const diagonals = [[1,1], [1,-1], [-1,1], [-1,-1]];
+                                for (const [dr, dc] of diagonals) {
+                                    const nr = i + dr;
+                                    const nc = j + dc;
+                                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                                        if (board[nr][nc] === BLACK) blackDiagonals++;
+                                    }
+                                }
+                                if (blackDiagonals >= 2) {
+                                    score += 30; // Potential cutting point
+                                }
+                                
+                                // Less randomness for more consistent aggression
+                                score += Math.random() * 5;
+                            }
+                            
+                            validMoves.push({ row: i, col: j, score, captures: captures.length });
+                        }
+                        
+                        board[i][j] = EMPTY;
+                    }
+                }
+            }
+
+            if (validMoves.length === 0) {
+                aiPass();
+                return;
+            }
+
+            // Sort by score
+            validMoves.sort((a, b) => b.score - a.score);
+            
+            // Pick from top moves based on difficulty
+            let move;
+            if (difficulty === 'easy') {
+                // More random, sometimes makes weak moves
+                const topMoves = validMoves.slice(0, Math.min(10, validMoves.length));
+                move = topMoves[Math.floor(Math.random() * topMoves.length)];
+            } else if (difficulty === 'medium') {
+                // Balanced selection from top moves
+                const topMoves = validMoves.slice(0, Math.min(5, validMoves.length));
+                move = topMoves[Math.floor(Math.random() * topMoves.length)];
+            } else {
+                // Hard mode: Usually picks best move
+                if (Math.random() < 0.8) {
+                    move = validMoves[0]; // Best move
+                } else {
+                    const topMoves = validMoves.slice(0, Math.min(3, validMoves.length));
+                    move = topMoves[Math.floor(Math.random() * topMoves.length)];
+                }
+            }
+
+            board[move.row][move.col] = WHITE;
+            
+            const captures = checkCaptures(move.row, move.col, BLACK);
+            if (captures.length > 0) {
+                captures.forEach(([r, c]) => {
+                    board[r][c] = EMPTY;
+                    whiteCaptures++;
+                });
+                
+                if (captures.length === 1 && !hasLiberties(move.row, move.col, WHITE)) {
+                    koPosition = { row: captures[0][0], col: captures[0][1] };
+                } else {
+                    koPosition = null;
+                }
+                
+                updateCaptures();
+                
+                // Capture messages based on difficulty
+                if (difficulty === 'hard' && captures.length > 1) {
+                    showMessage(getRandomMessage('hardKill'));
+                } else {
+                    showMessage("我吃掉了您的棋子！");
+                }
+            } else {
+                koPosition = null;
+                
+                // Context-aware messages based on difficulty and game phase
+                if (difficulty === 'easy') {
+                    if (moveHistory.length < 10) {
+                        showMessage(getRandomMessage('peaceful'));
+                    } else if (Math.random() < 0.3) {
+                        showMessage(getRandomMessage('encourage'));
+                    }
+                } else if (difficulty === 'hard') {
+                    // Check if we're threatening opponent stones
+                    let threatening = false;
+                    const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
+                    for (const [dr, dc] of neighbors) {
+                        const nr = move.row + dr;
+                        const nc = move.col + dc;
+                        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE &&
+                            board[nr][nc] === BLACK) {
+                            const libs = countGroupLiberties(nr, nc, BLACK);
+                            if (libs <= 2) {
+                                threatening = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (threatening) {
+                        showMessage(getRandomMessage('aggressive'));
+                    } else if (moveHistory.length < 10) {
+                        showMessage("我要控制這個區域！");
+                    }
+                } else {
+                    // Medium difficulty - balanced messages
+                    if (moveHistory.length < 10) {
+                        showMessage("我也佔個好位置");
+                    } else if (Math.random() < 0.2) {
+                        showMessage(getRandomMessage('middle'));
+                    }
+                }
+            }
+
+            passCount = 0;
+            lastMove = { row: move.row, col: move.col };
+            moveHistory.push({ row: move.row, col: move.col, player: WHITE });
+            renderBoard();
+            currentPlayer = BLACK;
+        }
+
+        function renderBoard() {
+            const intersections = document.querySelectorAll('.intersection');
+            
+            intersections.forEach(intersection => {
+                const row = parseInt(intersection.dataset.row);
+                const col = parseInt(intersection.dataset.col);
+                
+                // Clear existing stones
+                intersection.innerHTML = '';
+                
+                if (board[row][col] !== EMPTY) {
+                    const stone = document.createElement('div');
+                    stone.className = `stone ${board[row][col] === BLACK ? 'black' : 'white'}`;
+                    
+                    if (lastMove && lastMove.row === row && lastMove.col === col) {
+                        stone.classList.add('last-move');
+                    }
+                    
+                    intersection.appendChild(stone);
+                }
+            });
+        }
+
+        function playerPass() {
+            if (!gameStarted || currentPlayer !== BLACK) return;
+            
+            passCount++;
+            showMessage("您虛手了，輪到我");
+            currentPlayer = WHITE;
+            
+            if (passCount >= 2) {
+                endGame();
+            } else {
+                setTimeout(makeAIMove, 1000);
+            }
+        }
+
+        function aiPass() {
+            passCount++;
+            showMessage("我也虛手，對局結束！");
+            currentPlayer = BLACK;
+            
+            if (passCount >= 2) {
+                endGame();
+            }
+        }
+
+        function undoMove() {
+            if (moveHistory.length < 2 || currentPlayer !== BLACK) return;
+            
+            // Remove last two moves (AI and player)
+            moveHistory.pop();
+            moveHistory.pop();
+            
+            // Rebuild board from history
+            initBoard();
+            for (const move of moveHistory) {
+                board[move.row][move.col] = move.player;
+            }
+            
+            renderBoard();
+            showMessage("好的，讓您重新考慮");
+            currentPlayer = BLACK;
+        }
+
+        function calculateScore() {
+            // Mark territories first
+            const territoryMap = markTerritory();
+            
+            let blackTerritory = 0;
+            let whiteTerritory = 0;
+            let blackStoneCount = 0;
+            let whiteStoneCount = 0;
+            
+            // Count stones and territories
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                for (let j = 0; j < BOARD_SIZE; j++) {
+                    if (board[i][j] === BLACK) {
+                        blackStoneCount++;
+                    } else if (board[i][j] === WHITE) {
+                        whiteStoneCount++;
+                    } else if (board[i][j] === EMPTY) {
+                        if (territoryMap[i][j] === BLACK) {
+                            blackTerritory++;
+                        } else if (territoryMap[i][j] === WHITE) {
+                            whiteTerritory++;
+                        }
+                    }
+                }
+            }
+            
+            // Calculate final scores using Chinese rules
+            const blackTotal = blackTerritory + blackStoneCount + blackCaptures;
+            const whiteTotal = whiteTerritory + whiteStoneCount + whiteCaptures + 6.5;
+            
+            return {
+                black: {
+                    territory: blackTerritory,
+                    stones: blackStoneCount,
+                    captures: blackCaptures,
+                    total: blackTotal
+                },
+                white: {
+                    territory: whiteTerritory,
+                    stones: whiteStoneCount,
+                    captures: whiteCaptures,
+                    komi: 6.5,
+                    total: whiteTotal
+                },
+                territoryMap: territoryMap
+            };
+        }
+
+        function markTerritory() {
+            const territory = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
+            const visited = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(false));
+            
+            // Find all empty regions and determine their owner
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                for (let j = 0; j < BOARD_SIZE; j++) {
+                    if (board[i][j] === EMPTY && !visited[i][j]) {
+                        const region = [];
+                        const owner = floodFillTerritory(i, j, visited, region);
+                        
+                        // Mark the region with the owner's color
+                        for (const [r, c] of region) {
+                            territory[r][c] = owner;
+                        }
+                    }
+                }
+            }
+            
+            // Second pass: For small enclosed areas, use proximity-based assignment
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                for (let j = 0; j < BOARD_SIZE; j++) {
+                    if (board[i][j] === EMPTY && territory[i][j] === EMPTY) {
+                        // This empty point is disputed, assign based on influence
+                        territory[i][j] = getInfluenceBasedOwner(i, j);
+                    }
+                }
+            }
+            
+            return territory;
+        }
+
+        function floodFillTerritory(startRow, startCol, visited, region) {
+            const stack = [[startRow, startCol]];
+            const touchingColors = new Set();
+            const boundaryStones = [];
+            
+            while (stack.length > 0) {
+                const [row, col] = stack.pop();
+                
+                if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) {
+                    continue;
+                }
+                
+                if (visited[row][col]) continue;
+                
+                if (board[row][col] === EMPTY) {
+                    visited[row][col] = true;
+                    region.push([row, col]);
+                    
+                    // Check all neighbors
+                    const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
+                    for (const [dr, dc] of neighbors) {
+                        const newRow = row + dr;
+                        const newCol = col + dc;
+                        
+                        if (newRow >= 0 && newRow < BOARD_SIZE && 
+                            newCol >= 0 && newCol < BOARD_SIZE) {
+                            
+                            if (board[newRow][newCol] !== EMPTY) {
+                                touchingColors.add(board[newRow][newCol]);
+                                boundaryStones.push({color: board[newRow][newCol], row: newRow, col: newCol});
+                            } else if (!visited[newRow][newCol]) {
+                                stack.push([newRow, newCol]);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // If the region touches only one color, that player owns it
+            if (touchingColors.size === 1) {
+                return touchingColors.values().next().value;
+            }
+            
+            // If region is small and mostly surrounded by one color, assign to that color
+            if (region.length <= 4) {
+                let blackBoundary = 0;
+                let whiteBoundary = 0;
+                for (const stone of boundaryStones) {
+                    if (stone.color === BLACK) blackBoundary++;
+                    else whiteBoundary++;
+                }
+                
+                // If 75% or more of boundary is one color, assign to that color
+                const totalBoundary = blackBoundary + whiteBoundary;
+                if (blackBoundary >= totalBoundary * 0.75) return BLACK;
+                if (whiteBoundary >= totalBoundary * 0.75) return WHITE;
+            }
+            
+            // Otherwise it's neutral/disputed
+            return EMPTY;
+        }
+
+        function getInfluenceBasedOwner(row, col) {
+            // Calculate influence based on nearby stones
+            let blackInfluence = 0;
+            let whiteInfluence = 0;
+            
+            // Check in a 3x3 area around the point
+            for (let dr = -2; dr <= 2; dr++) {
+                for (let dc = -2; dc <= 2; dc++) {
+                    const r = row + dr;
+                    const c = col + dc;
+                    if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
+                        if (board[r][c] === BLACK) {
+                            const distance = Math.abs(dr) + Math.abs(dc);
+                            blackInfluence += (3 - Math.min(distance, 3));
+                        } else if (board[r][c] === WHITE) {
+                            const distance = Math.abs(dr) + Math.abs(dc);
+                            whiteInfluence += (3 - Math.min(distance, 3));
+                        }
+                    }
+                }
+            }
+            
+            // Assign to the color with more influence
+            if (blackInfluence > whiteInfluence + 2) return BLACK;
+            if (whiteInfluence > blackInfluence + 2) return WHITE;
+            
+            // If influence is very close, check immediate neighbors only
+            const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
+            let blackNeighbors = 0;
+            let whiteNeighbors = 0;
+            
+            for (const [dr, dc] of neighbors) {
+                const nr = row + dr;
+                const nc = col + dc;
+                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                    if (board[nr][nc] === BLACK) blackNeighbors++;
+                    else if (board[nr][nc] === WHITE) whiteNeighbors++;
+                }
+            }
+            
+            if (blackNeighbors > whiteNeighbors) return BLACK;
+            if (whiteNeighbors > blackNeighbors) return WHITE;
+            
+            // Still can't decide - remain neutral
+            return EMPTY;
+        }
+
+        function showTerritories(territoryMap) {
+            // Remove old territory markers
+            document.querySelectorAll('.territoryOverlay').forEach(el => el.remove());
+            
+            const boardElement = document.getElementById('board');
+            if (!boardElement) return;
+            
+            // Count territories for debugging
+            let blackTerritoryCount = 0;
+            let whiteTerritoryCount = 0;
+            
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                for (let j = 0; j < BOARD_SIZE; j++) {
+                    if (board[i][j] === EMPTY && territoryMap[i][j] !== EMPTY) {
+                        const overlay = document.createElement('div');
+                        overlay.className = `territoryOverlay ${territoryMap[i][j] === BLACK ? 'black-territory' : 'white-territory'}`;
+                        overlay.style.position = 'absolute';
+                        // Adjust positioning to center on intersection
+                        overlay.style.left = `${(j / 12) * 100 - 3}%`;
+                        overlay.style.top = `${(i / 12) * 100 - 3}%`;
+                        overlay.style.width = '6%';
+                        overlay.style.height = '6%';
+                        boardElement.appendChild(overlay);
+                        
+                        if (territoryMap[i][j] === BLACK) blackTerritoryCount++;
+                        else if (territoryMap[i][j] === WHITE) whiteTerritoryCount++;
+                    }
+                }
+            }
+            
+            console.log(`Territories marked - Black: ${blackTerritoryCount}, White: ${whiteTerritoryCount}`);
+        }
+
+        function clearTerritories() {
+            document.querySelectorAll('.territoryOverlay').forEach(el => el.remove());
+        }
+
+        function toggleExplanation() {
+            const button = event.target;
+            const section = document.getElementById('explanationSection');
+            
+            button.classList.toggle('expanded');
+            section.classList.toggle('show');
+            
+            if (section.classList.contains('show')) {
+                button.textContent = '收起說明';
+            } else {
+                button.textContent = '瞭解計分方式';
+            }
+        }
+
+        function endGame() {
+            gameStarted = false;
+            const scoreData = calculateScore();
+            const winner = scoreData.black.total > scoreData.white.total ? 'black' : 'white';
+            const difference = Math.abs(scoreData.black.total - scoreData.white.total);
+            
+            // Show territories on the board
+            showTerritories(scoreData.territoryMap);
+            
+            gameCount++;
+            if (winner === 'black') {
+                winCount++;
+            } else {
+                lossCount++;
+            }
+
+            // Auto-adjust difficulty if enabled
+            adjustDifficultyAutomatically();
+
+            const modal = document.getElementById('endGameModal');
+            const finalScore = document.getElementById('finalScore');
+            const endMessage = document.getElementById('endMessage');
+            
+            // Update summary score
+            finalScore.textContent = `黑: ${scoreData.black.total.toFixed(1)} 白: ${scoreData.white.total.toFixed(1)}`;
+            
+            // Update detailed breakdown
+            document.querySelector('#blackTerritory .detailValue').textContent = `${scoreData.black.territory} 格`;
+            document.querySelector('#blackStones .detailValue').textContent = `${scoreData.black.stones} 子`;
+            document.querySelector('#blackCaptured .detailValue').textContent = `${scoreData.black.captures} 個`;
+            document.getElementById('blackTotal').textContent = scoreData.black.total.toFixed(1);
+            
+            document.querySelector('#whiteTerritory .detailValue').textContent = `${scoreData.white.territory} 格`;
+            document.querySelector('#whiteStones .detailValue').textContent = `${scoreData.white.stones} 子`;
+            document.querySelector('#whiteCaptured .detailValue').textContent = `${scoreData.white.captures} 個`;
+            document.getElementById('whiteTotal').textContent = scoreData.white.total.toFixed(1);
+            
+            // Personality-based end messages
+            let personalityText = "";
+            if (difficulty === 'easy') {
+                personalityText = winner === 'black' ? 
+                    "您贏了！我的和平策略沒成功呢" : 
+                    "我靠著穩定的地盤贏了，但您下得很好！";
+            } else if (difficulty === 'medium') {
+                personalityText = winner === 'black' ? 
+                    "精彩的對局！您的策略更勝一籌！" : 
+                    "這次我贏了，但對局很精彩！";
+            } else {
+                personalityText = winner === 'black' ? 
+                    "您在激烈的戰鬥中獲勝了！真厲害！" : 
+                    "激烈的戰鬥後，我險勝了！";
+            }
+            
+            if (winner === 'black') {
+                endMessage.textContent = `${personalityText} 您贏了${difference.toFixed(1)}目！今日戰績: ${winCount}勝${lossCount}負`;
+            } else {
+                endMessage.textContent = `${personalityText} 我贏了${difference.toFixed(1)}目。今日戰績: ${winCount}勝${lossCount}負`;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function newGame() {
+            document.getElementById('endGameModal').style.display = 'none';
+            
+            // Clear territory markings from previous game
+            clearTerritories();
+            
+            initBoard();
+            renderBoard();
+            gameStarted = true;
+            
+            // Reset explanation section
+            const explanationSection = document.getElementById('explanationSection');
+            const expandButton = document.querySelector('.expandButton');
+            explanationSection.classList.remove('show');
+            expandButton.classList.remove('expanded');
+            expandButton.textContent = '瞭解計分方式';
+            
+            if (gameCount > 0 && gameCount % 5 === 0) {
+                showMessage("您今天下了5局了，要不要休息一下？");
+            } else {
+                showMessage("新的一局開始！您執黑子先下。");
+            }
+        }
+
+        function takeBreak() {
+            document.getElementById('endGameModal').style.display = 'none';
+            clearTerritories();
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('welcomeScreen').style.display = 'block';
+            
+            const welcomeMessage = document.querySelector('.welcomeMessage');
+            welcomeMessage.innerHTML = `歡迎回來！<br>今日戰績: ${winCount}勝${lossCount}負<br>準備好再來一局了嗎？`;
+        }
+
+        function showMessage(message) {
+            document.getElementById('aiMessage').textContent = message;
+        }
+
+        function getRandomMessage(category) {
+            const messages = aiMessages[category];
+            return messages[Math.floor(Math.random() * messages.length)];
+        }
+
+        function updateCaptures() {
+            document.getElementById('blackCaptures').textContent = blackCaptures;
+            document.getElementById('whiteCaptures').textContent = whiteCaptures;
+        }
+
+        function startGame() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            
+            initBoard();
+            createBoard();
+            renderBoard();
+            gameStarted = true;
+            
+            // Enable auto-adjustment for new session
+            if (gameCount === 0) {
+                difficultyAdjustment = true;
+            }
+            
+            // Initialize settings UI
+            const gridToggle = document.getElementById('gridToggle');
+            if (gridEnabled) {
+                gridToggle.classList.add('active');
+                gridToggle.textContent = '開啟';
+            } else {
+                gridToggle.classList.remove('active');
+                gridToggle.textContent = '關閉';
+            }
+            
+            // Set initial difficulty buttons and hint
+            document.querySelectorAll('.difficultyButton').forEach((btn, index) => {
+                btn.classList.remove('active');
+                if ((difficulty === 'easy' && index === 0) ||
+                    (difficulty === 'medium' && index === 1) ||
+                    (difficulty === 'hard' && index === 2)) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Set difficulty hint text with color - directly based on difficulty variable
+            const hintElement = document.getElementById('difficultyHint');
+            if (hintElement) {
+                if (difficulty === 'easy') {
+                    hintElement.textContent = '和平建設';
+                    hintElement.style.color = '#4CAF50';
+                } else if (difficulty === 'medium') {
+                    hintElement.textContent = '攻守平衡';
+                    hintElement.style.color = '#FF9800';
+                } else if (difficulty === 'hard') {
+                    hintElement.textContent = '激烈戰鬥';
+                    hintElement.style.color = '#F44336';
+                }
+            }
+            
+            // Set board style based on difficulty
+            updateBoardStyle();
+            
+            if (gameCount === 0) {
+                showMessage("您執黑子，請先下！觸碰任何交叉點落子。");
+            } else {
+                let personalityText = "";
+                if (difficulty === 'easy') {
+                    personalityText = "（和平模式）我會在自己的角落安靜建地盤";
+                } else if (difficulty === 'medium') {
+                    personalityText = "（平衡模式）我會認真和您對弈";
+                } else {
+                    personalityText = "（戰鬥狂模式）我要從第一手就開始進攻！";
+                }
+                showMessage(`第${gameCount + 1}局開始！${personalityText}`);
+            }
+        }
+
+        // Prevent zooming on double tap
+        document.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        let lastTouchEnd = 0;
+    </script>
+</body>
+</html>

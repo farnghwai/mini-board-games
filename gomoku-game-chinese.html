@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>五子棋 - 與小克對弈</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "微軟正黑體", sans-serif;
+            background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            touch-action: manipulation;
+        }
+
+        #gameContainer {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #welcomeScreen {
+            text-align: center;
+            padding: 30px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .welcomeTitle {
+            font-size: 32px;
+            color: #4a4a4a;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .welcomeMessage {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .startButton {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 15px 40px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .startButton:active {
+            transform: scale(0.95);
+        }
+
+        #gameScreen {
+            display: none;
+        }
+
+        #gameHeader {
+            text-align: center;
+        }
+
+        .gameTitle {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4a4a4a;
+            margin-bottom: 10px;
+        }
+
+        #scoreArea {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 15px;
+        }
+
+        .scoreItem {
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stone {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .blackStone {
+            background: #000;
+        }
+
+        .whiteStone {
+            background: #fff;
+            border: 1px solid #333;
+        }
+
+        #messageArea {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #aiMessage {
+            font-size: 18px;
+            color: #4a4a4a;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        #boardContainer {
+            background: #b45309;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        #gameBoard {
+            background: #d97706;
+            padding: 2px;
+            position: relative;
+        }
+
+        .boardRow {
+            display: flex;
+        }
+
+        .boardCell {
+            width: 26px;
+            height: 26px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        @media (min-width: 380px) {
+            .boardCell {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        .gridLines {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .gridLine {
+            stroke: #8b4513;
+            stroke-width: 1;
+        }
+
+        .placedStone {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            z-index: 10;
+            position: relative;
+        }
+
+        @media (min-width: 380px) {
+            .placedStone {
+                width: 24px;
+                height: 24px;
+            }
+        }
+
+        .placedStone.black {
+            background: #000;
+        }
+
+        .placedStone.white {
+            background: #fff;
+            border: 1px solid #333;
+        }
+
+        .placedStone.lastMove {
+            box-shadow: 0 0 0 2px #ef4444;
+        }
+
+        .placedStone.winning {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 2px #10b981; }
+            50% { box-shadow: 0 0 0 4px #10b981; }
+        }
+
+        .hoverPreview {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 5;
+            position: relative;
+        }
+
+        @media (min-width: 380px) {
+            .hoverPreview {
+                width: 24px;
+                height: 24px;
+            }
+        }
+
+        .starPoint {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #000;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+
+        #controlButtons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .gameButton {
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .gameButton:active {
+            transform: scale(0.95);
+        }
+
+        .gameButton.start {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .gameButton.restart {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .gameButton.newSession {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        #sessionInfo {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen">
+            <div class="welcomeTitle">五子棋</div>
+            <div class="welcomeMessage">
+                您好！我是棋友小克<br>
+                準備好來一局五子棋嗎？
+            </div>
+            <button class="startButton" onclick="startFirstGame()">開始下棋 😊</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen">
+            <div id="gameHeader">
+                <h1 class="gameTitle">五子棋</h1>
+                <div id="scoreArea">
+                    <div class="scoreItem">
+                        <span>您：</span>
+                        <span id="playerScore">0</span>
+                        <span class="stone blackStone"></span>
+                    </div>
+                    <div class="scoreItem">
+                        <span>小克：</span>
+                        <span id="npcScore">0</span>
+                        <span class="stone whiteStone"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="messageArea">
+                <div id="aiMessage">準備開始...</div>
+            </div>
+
+            <div id="boardContainer">
+                <div id="gameBoard"></div>
+            </div>
+
+            <div id="controlButtons">
+                <button id="startBtn" class="gameButton start hidden" onclick="startNewGame()">開始下棋</button>
+                <button id="restartBtn" class="gameButton restart hidden" onclick="startNewGame()">再來一局</button>
+                <button id="newSessionBtn" class="gameButton newSession hidden" onclick="newSession()">新局</button>
+            </div>
+
+            <div id="sessionInfo">
+                第 <span id="sessionGames">0</span> 局 • 今日已玩 <span id="totalGames">0</span> 局
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let board = [];
+        let currentPlayer = 'player';
+        let gameActive = false;
+        let isProcessing = false;
+        let score = { player: 0, npc: 0 };
+        let sessionGames = 0;
+        let totalGamesToday = 0;
+        let lastMove = null;
+        let winningLine = null;
+        let hoveredPosition = null;
+
+        // NPC settings
+        let npcDifficulty = 'easy';
+        let localResponsesUsed = [];
+
+        // Local response system - Chinese language
+        const localResponses = {
+            greetings: [
+                "來下棋吧！您執黑子先下！⚫",
+                "開始囉！點擊棋盤任意位置落子！",
+                "我們來下五子棋！您先請！",
+                "準備好了嗎？輕觸棋盤開始！"
+            ],
+            playerMoves: {
+                good: ["好棋！", "不錯喔！", "有意思！", "厲害！", "您真聰明！"],
+                normal: ["輪到我了", "我來想想", "嗯...", "讓我看看", "有了！"],
+                winning: ["哎呀，您要贏了！", "我得小心了！", "危險啊！", "您的棋路很厲害！"]
+            },
+            npcMoves: {
+                normal: ["我下這裡！", "試試這步", "這裡如何？", "我走一步", "輪到我囉！"],
+                blocking: ["擋住！😊", "不能讓您得手！", "我看到了！", "攔截！", "哈哈，擋住了！"],
+                winning: ["這步不錯", "我喜歡這個位置", "嗯，這裡！", "讓我試試..."]
+            },
+            playerWin: [
+                "恭喜您贏了！🎉",
+                "您真厲害！佩服佩服！",
+                "您贏啦！再來一局嗎？",
+                "高手！您贏了！",
+                "漂亮！這局您贏了！"
+            ],
+            npcWin: [
+                "我僥倖贏了！再來一局嗎？",
+                "這局我贏了，再試試看？",
+                "承讓了！要不要再來？",
+                "運氣不錯，我贏了！"
+            ],
+            draw: [
+                "平局！我們實力相當！",
+                "和棋了！精彩的對局！",
+                "不分勝負！再來一局？"
+            ],
+            encouragement: [
+                "您下得很好！",
+                "慢慢來，不著急！",
+                "好棋局！",
+                "真有趣！",
+                "您越來越厲害了！"
+            ]
+        };
+
+        // Initialize board
+        function initBoard() {
+            board = Array(13).fill(null).map(() => Array(13).fill(null));
+            lastMove = null;
+            winningLine = null;
+            currentPlayer = 'player';
+            renderBoard();
+        }
+
+        // Render board
+        function renderBoard() {
+            const boardElement = document.getElementById('gameBoard');
+            boardElement.innerHTML = '';
+
+            for (let row = 0; row < 13; row++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'boardRow';
+
+                for (let col = 0; col < 13; col++) {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = 'boardCell';
+                    cellDiv.dataset.row = row;
+                    cellDiv.dataset.col = col;
+
+                    // Add grid lines
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.classList.add('gridLines');
+                    svg.setAttribute('width', '100%');
+                    svg.setAttribute('height', '100%');
+
+                    // Horizontal line
+                    if (col < 12) {
+                        const hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        hLine.setAttribute('x1', '50%');
+                        hLine.setAttribute('y1', '50%');
+                        hLine.setAttribute('x2', '100%');
+                        hLine.setAttribute('y2', '50%');
+                        hLine.classList.add('gridLine');
+                        svg.appendChild(hLine);
+                    }
+                    if (col > 0) {
+                        const hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        hLine.setAttribute('x1', '0');
+                        hLine.setAttribute('y1', '50%');
+                        hLine.setAttribute('x2', '50%');
+                        hLine.setAttribute('y2', '50%');
+                        hLine.classList.add('gridLine');
+                        svg.appendChild(hLine);
+                    }
+
+                    // Vertical line
+                    if (row < 12) {
+                        const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        vLine.setAttribute('x1', '50%');
+                        vLine.setAttribute('y1', '50%');
+                        vLine.setAttribute('x2', '50%');
+                        vLine.setAttribute('y2', '100%');
+                        vLine.classList.add('gridLine');
+                        svg.appendChild(vLine);
+                    }
+                    if (row > 0) {
+                        const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        vLine.setAttribute('x1', '50%');
+                        vLine.setAttribute('y1', '0');
+                        vLine.setAttribute('x2', '50%');
+                        vLine.setAttribute('y2', '50%');
+                        vLine.classList.add('gridLine');
+                        svg.appendChild(vLine);
+                    }
+
+                    cellDiv.appendChild(svg);
+
+                    // Add star points
+                    if ((row === 3 && col === 3) ||
+                        (row === 3 && col === 9) ||
+                        (row === 9 && col === 3) ||
+                        (row === 9 && col === 9) ||
+                        (row === 6 && col === 6)) {
+                        const starPoint = document.createElement('div');
+                        starPoint.className = 'starPoint';
+                        cellDiv.appendChild(starPoint);
+                    }
+
+                    // Add stone if present
+                    if (board[row][col]) {
+                        const stone = document.createElement('div');
+                        stone.className = 'placedStone';
+                        stone.classList.add(board[row][col] === 'player' ? 'black' : 'white');
+
+                        // Highlight last move
+                        if (lastMove && lastMove.row === row && lastMove.col === col) {
+                            stone.classList.add('lastMove');
+                        }
+
+                        // Highlight winning stones
+                        if (winningLine && winningLine.some(([r, c]) => r === row && c === col)) {
+                            stone.classList.add('winning');
+                        }
+
+                        cellDiv.appendChild(stone);
+                    }
+
+                    // Add click handler
+                    cellDiv.onclick = () => handleCellClick(row, col);
+                    cellDiv.onmouseenter = () => handleCellHover(row, col, true);
+                    cellDiv.onmouseleave = () => handleCellHover(row, col, false);
+
+                    rowDiv.appendChild(cellDiv);
+                }
+
+                boardElement.appendChild(rowDiv);
+            }
+        }
+
+        // Handle cell click
+        function handleCellClick(row, col) {
+            if (!gameActive || currentPlayer !== 'player' || isProcessing) return;
+            if (board[row][col] !== null) return;
+
+            isProcessing = true;
+
+            // Place player stone
+            board[row][col] = 'player';
+            lastMove = { row, col };
+            renderBoard();
+
+            // Check for player win
+            const playerWin = checkWinner(row, col, 'player');
+            if (playerWin) {
+                winningLine = playerWin;
+                renderBoard();
+                score.player++;
+                updateScore();
+                showMessage(getLocalResponse('playerWin'));
+                gameActive = false;
+                isProcessing = false;
+                showEndButtons();
+                return;
+            }
+
+            // Check for draw
+            if (checkDraw()) {
+                showMessage(getLocalResponse('draw'));
+                gameActive = false;
+                isProcessing = false;
+                showEndButtons();
+                return;
+            }
+
+            // Show processing message
+            showMessage(getLocalResponse('playerMoves', 'normal'));
+
+            // NPC turn
+            currentPlayer = 'npc';
+            setTimeout(() => {
+                makeNPCMove();
+            }, 800);
+        }
+
+        // Handle cell hover
+        function handleCellHover(row, col, isHovering) {
+            if (!gameActive || currentPlayer !== 'player' || board[row][col] !== null) {
+                return;
+            }
+
+            const cell = document.querySelector(`.boardCell[data-row="${row}"][data-col="${col}"]`);
+            const existingPreview = cell.querySelector('.hoverPreview');
+
+            if (isHovering && !existingPreview) {
+                const preview = document.createElement('div');
+                preview.className = 'hoverPreview';
+                cell.appendChild(preview);
+            } else if (!isHovering && existingPreview) {
+                existingPreview.remove();
+            }
+        }
+
+        // Make NPC move
+        function makeNPCMove() {
+            const move = calculateNPCMove();
+            if (!move) {
+                showMessage("沒地方下了！");
+                gameActive = false;
+                isProcessing = false;
+                showEndButtons();
+                return;
+            }
+
+            board[move.row][move.col] = 'npc';
+            lastMove = { row: move.row, col: move.col };
+            renderBoard();
+
+            // Check for NPC win
+            const npcWin = checkWinner(move.row, move.col, 'npc');
+            if (npcWin) {
+                winningLine = npcWin;
+                renderBoard();
+                score.npc++;
+                updateScore();
+                showMessage(getLocalResponse('npcWin'));
+                gameActive = false;
+                isProcessing = false;
+                showEndButtons();
+                return;
+            }
+
+            // Check for draw
+            if (checkDraw()) {
+                showMessage(getLocalResponse('draw'));
+                gameActive = false;
+                isProcessing = false;
+                showEndButtons();
+                return;
+            }
+
+            // Continue game
+            showMessage(getLocalResponse('npcMoves', 'normal'));
+            currentPlayer = 'player';
+            isProcessing = false;
+        }
+
+        // Calculate NPC move
+        function calculateNPCMove() {
+            // Check for winning move (4 in a row, need 5th)
+            const winMove = findBestMove('npc', 5);
+            if (winMove) return winMove;
+
+            // Check for blocking move (opponent has 4)
+            const blockMove = findBestMove('player', 5);
+            if (blockMove) return blockMove;
+
+            // Check for creating 4 in a row
+            const createFour = findBestMove('npc', 4);
+            if (createFour) return createFour;
+
+            // Block opponent's 3 in a row
+            const blockThree = findBestMove('player', 4);
+            if (blockThree) return blockThree;
+
+            // Easy mode: sometimes make random moves
+            if (npcDifficulty === 'easy' && Math.random() < 0.3) {
+                return getRandomMove();
+            }
+
+            // Prefer center area
+            return getCenterMove();
+        }
+
+        // Find best move for target length
+        function findBestMove(player, targetLength) {
+            for (let row = 0; row < 13; row++) {
+                for (let col = 0; col < 13; col++) {
+                    if (board[row][col] === null) {
+                        // Test this position
+                        board[row][col] = player;
+                        const length = checkLineLength(row, col, player);
+                        board[row][col] = null;
+
+                        if (length >= targetLength) {
+                            return { row, col };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Check line length from position
+        function checkLineLength(row, col, player) {
+            const directions = [
+                [0, 1], [1, 0], [1, 1], [1, -1]  // horizontal, vertical, diagonal
+            ];
+
+            let maxLength = 1;
+
+            for (let [dr, dc] of directions) {
+                let length = 1;
+
+                // Check forward direction
+                for (let i = 1; i < 5; i++) {
+                    const r = row + dr * i;
+                    const c = col + dc * i;
+                    if (r >= 0 && r < 13 && c >= 0 && c < 13 && board[r][c] === player) {
+                        length++;
+                    } else break;
+                }
+
+                // Check backward direction
+                for (let i = 1; i < 5; i++) {
+                    const r = row - dr * i;
+                    const c = col - dc * i;
+                    if (r >= 0 && r < 13 && c >= 0 && c < 13 && board[r][c] === player) {
+                        length++;
+                    } else break;
+                }
+
+                maxLength = Math.max(maxLength, length);
+            }
+
+            return maxLength;
+        }
+
+        // Get random move near existing stones
+        function getRandomMove() {
+            const availableMoves = [];
+            for (let row = 0; row < 13; row++) {
+                for (let col = 0; col < 13; col++) {
+                    if (board[row][col] === null) {
+                        // Prefer moves near existing stones
+                        if (hasNeighbor(row, col)) {
+                            availableMoves.push({ row, col });
+                        }
+                    }
+                }
+            }
+
+            if (availableMoves.length === 0) {
+                // If no moves near stones, pick center area
+                return getCenterMove();
+            }
+
+            return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+        }
+
+        // Check if position has neighbor
+        function hasNeighbor(row, col) {
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const r = row + dr;
+                    const c = col + dc;
+                    if (r >= 0 && r < 13 && c >= 0 && c < 13 && board[r][c] !== null) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Get center area move
+        function getCenterMove() {
+            const center = 6;
+            const range = 3;
+
+            for (let d = 0; d <= range; d++) {
+                for (let row = center - d; row <= center + d; row++) {
+                    for (let col = center - d; col <= center + d; col++) {
+                        if (row >= 0 && row < 13 && col >= 0 && col < 13 && board[row][col] === null) {
+                            return { row, col };
+                        }
+                    }
+                }
+            }
+
+            // Fallback to any empty position
+            for (let row = 0; row < 13; row++) {
+                for (let col = 0; col < 13; col++) {
+                    if (board[row][col] === null) {
+                        return { row, col };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // Check for winner
+        function checkWinner(lastRow, lastCol, player) {
+            const directions = [
+                [0, 1], [1, 0], [1, 1], [1, -1]  // horizontal, vertical, diagonal
+            ];
+
+            for (let [dr, dc] of directions) {
+                let count = 1;
+                const line = [[lastRow, lastCol]];
+
+                // Check forward direction
+                for (let i = 1; i < 5; i++) {
+                    const r = lastRow + dr * i;
+                    const c = lastCol + dc * i;
+                    if (r >= 0 && r < 13 && c >= 0 && c < 13 && board[r][c] === player) {
+                        count++;
+                        line.push([r, c]);
+                    } else break;
+                }
+
+                // Check backward direction
+                for (let i = 1; i < 5; i++) {
+                    const r = lastRow - dr * i;
+                    const c = lastCol - dc * i;
+                    if (r >= 0 && r < 13 && c >= 0 && c < 13 && board[r][c] === player) {
+                        count++;
+                        line.unshift([r, c]);
+                    } else break;
+                }
+
+                if (count >= 5) {
+                    return line.slice(0, 5);  // Return first 5 stones
+                }
+            }
+
+            return null;
+        }
+
+        // Check for draw
+        function checkDraw() {
+            for (let row = 0; row < 13; row++) {
+                for (let col = 0; col < 13; col++) {
+                    if (board[row][col] === null) return false;
+                }
+            }
+            return true;
+        }
+
+        // Get local response without repetition
+        function getLocalResponse(category, subcategory = null) {
+            let responses;
+            if (subcategory) {
+                responses = localResponses[category][subcategory];
+            } else {
+                responses = localResponses[category];
+            }
+
+            const availableResponses = responses.filter(r => !localResponsesUsed.includes(r));
+
+            if (availableResponses.length === 0) {
+                localResponsesUsed = [];
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+
+            const selected = availableResponses[Math.floor(Math.random() * availableResponses.length)];
+            localResponsesUsed.push(selected);
+
+            if (localResponsesUsed.length > 10) {
+                localResponsesUsed.shift();
+            }
+
+            return selected;
+        }
+
+        // Show message
+        function showMessage(message) {
+            document.getElementById('aiMessage').textContent = message;
+        }
+
+        // Update score display
+        function updateScore() {
+            document.getElementById('playerScore').textContent = score.player;
+            document.getElementById('npcScore').textContent = score.npc;
+        }
+
+        // Update session info
+        function updateSessionInfo() {
+            document.getElementById('sessionGames').textContent = sessionGames;
+            document.getElementById('totalGames').textContent = totalGamesToday;
+        }
+
+        // Show appropriate end buttons
+        function showEndButtons() {
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('restartBtn').classList.add('hidden');
+            document.getElementById('newSessionBtn').classList.add('hidden');
+
+            if (sessionGames < 5) {
+                document.getElementById('restartBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('newSessionBtn').classList.remove('hidden');
+                // End session message
+                setTimeout(() => {
+                    showMessage(
+                        `今日戰績：您贏了${score.player}局，我贏了${score.npc}局。` +
+                        `謝謝陪我下棋！點擊「新局」可以再玩。`
+                    );
+                }, 2000);
+            }
+        }
+
+        // Start first game
+        function startFirstGame() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+
+            // Initialize session
+            totalGamesToday = parseInt(localStorage.getItem('gomokuGamesToday') || '0');
+            const lastPlayDate = localStorage.getItem('gomokuLastPlayDate');
+            const today = new Date().toDateString();
+
+            if (lastPlayDate !== today) {
+                totalGamesToday = 0;
+                localStorage.setItem('gomokuLastPlayDate', today);
+            }
+
+            startNewGame();
+        }
+
+        // Start new game
+        function startNewGame() {
+            initBoard();
+            gameActive = true;
+            isProcessing = false;
+            sessionGames++;
+            totalGamesToday++;
+
+            // Save to localStorage
+            localStorage.setItem('gomokuGamesToday', totalGamesToday.toString());
+
+            updateSessionInfo();
+
+            // Hide all buttons during game
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('restartBtn').classList.add('hidden');
+            document.getElementById('newSessionBtn').classList.add('hidden');
+
+            // Show greeting
+            showMessage(getLocalResponse('greetings'));
+
+            // Special messages
+            if (sessionGames === 1 && totalGamesToday === 1) {
+                const hour = new Date().getHours();
+                const timeOfDay = hour < 12 ? '早上' : hour < 17 ? '下午' : '晚上';
+                showMessage(`${timeOfDay}好！歡迎來玩五子棋！您執黑子先下。`);
+            } else if (sessionGames > 3) {
+                showMessage("您真有耐心！這是第" + sessionGames + "局了，您先下！");
+            }
+        }
+
+        // New session
+        function newSession() {
+            // Reset session
+            sessionGames = 0;
+            score = { player: 0, npc: 0 };
+            updateScore();
+
+            // Show welcome screen again
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('welcomeScreen').style.display = 'block';
+
+            const welcomeMessage = document.querySelector('.welcomeMessage');
+            welcomeMessage.innerHTML = `歡迎回來！<br>今日戰績已重置<br>準備好再來一局了嗎？`;
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            // Check if returning player
+            const lastPlayDate = localStorage.getItem('gomokuLastPlayDate');
+            if (lastPlayDate) {
+                const welcomeMessage = document.querySelector('.welcomeMessage');
+                welcomeMessage.innerHTML = `歡迎回來！<br>準備好繼續下棋了嗎？`;
+            }
+        };
+    </script>
+</body>
+</html>
