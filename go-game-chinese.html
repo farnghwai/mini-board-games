@@ -2,157 +2,250 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>圍棋 - 與小克對弈</title>
     <style>
+        :root {
+            --primary-bg: linear-gradient(135deg, #f5f5dc 0%, #e8ddc0 100%);
+            --card-bg: white;
+            --card-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --board-bg: #deb887;
+            --board-lines: #d4a76a;
+            --text-primary: #4a4a4a;
+            --text-secondary: #666;
+            --border-radius: 0.9375rem; /* 15px */
+            --touch-target: max(2.75rem, 44px);
+            --difficulty-easy: #4CAF50;    /* Green */
+            --difficulty-medium: #FF9800;   /* Orange */
+            --difficulty-hard: #F44336;     /* Red */
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
-            user-select: none;
+        }
+
+        html {
+            font-size: clamp(14px, 4vw, 18px);
+            overflow: hidden;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "微軟正黑體", sans-serif;
-            background: linear-gradient(135deg, #f5f5dc 0%, #e8ddc0 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 10px;
-            touch-action: manipulation;
+            background: var(--primary-bg);
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            overscroll-behavior: none;
+            user-select: none;
+            padding: 0;
         }
 
         #gameContainer {
+            display: grid;
+            grid-template-rows: 1fr;
+            height: 100%;
             width: 100%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            max-width: min(400px, 90vw);
+            margin: 0 auto;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            padding: clamp(0.5rem, 2vw, 1rem);
+            box-sizing: border-box;
         }
 
         #welcomeScreen {
+            grid-column: 1;
+            grid-row: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            padding: 30px 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: clamp(1.25rem, 5vw, 2rem);
+            gap: 1rem;
         }
 
         .welcomeTitle {
-            font-size: 28px;
-            color: #4a4a4a;
-            margin-bottom: 15px;
+            font-size: clamp(1.5rem, 5vw, 1.75rem);
+            color: var(--text-primary);
             font-weight: bold;
+            line-height: 1.2;
         }
 
         .welcomeMessage {
-            font-size: 20px;
-            color: #666;
-            margin-bottom: 30px;
+            font-size: clamp(1rem, 4vw, 1.25rem);
+            color: var(--text-secondary);
             line-height: 1.6;
+            max-width: 20ch;
         }
 
         .startButton {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary-gradient);
             color: white;
             border: none;
-            border-radius: 25px;
-            padding: 15px 40px;
-            font-size: 22px;
+            border-radius: 1.5625rem;
+            padding: 0.75rem 2.5rem;
+            font-size: clamp(1rem, 4vw, 1.375rem);
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
             transition: transform 0.2s;
+            min-height: var(--touch-target);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .startButton:active {
             transform: scale(0.95);
         }
 
+        .startButton:focus-visible {
+            outline: 2px solid var(--text-primary);
+            outline-offset: 2px;
+        }
+
         #gameScreen {
             display: none;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            gap: clamp(0.5rem, 2vw, 1rem);
+        }
+
+        #gameScreen.active {
+            display: flex;
+        }
+
+        .game-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+
+        .gameTitle {
+            font-size: clamp(1.25rem, 5vw, 1.75rem);
+            font-weight: bold;
+            color: var(--text-primary);
+            margin: 0;
         }
 
         #messageArea {
-            background: white;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            min-height: 60px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: clamp(0.75rem, 3vw, 1rem);
+            box-shadow: var(--card-shadow);
+            min-height: clamp(3rem, 8vw, 4rem);
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         #aiMessage {
-            font-size: 18px;
-            color: #4a4a4a;
+            font-size: clamp(0.875rem, 3.5vw, 1.125rem);
+            color: var(--text-primary);
             text-align: center;
             line-height: 1.4;
         }
 
+        .game-board-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            min-height: 0;
+        }
+
         #boardContainer {
-            background: #deb887;
-            border-radius: 10px;
-            padding: 10px;
+            background: var(--board-bg);
+            border-radius: 0.625rem;
+            padding: clamp(0.5rem, 2vw, 0.75rem);
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             position: relative;
             transition: background 0.3s ease;
+            width: min(80vw, 80vh, 400px);
+            aspect-ratio: 1;
+            container-type: inline-size;
         }
-        
+
         #boardContainer.easy-mode {
-            background: linear-gradient(135deg, #d4c5a9 0%, #deb887 100%);
+            background: linear-gradient(135deg, #d4c5a9 0%, var(--board-bg) 100%);
         }
-        
+
         #boardContainer.medium-mode {
-            background: #deb887;
+            background: linear-gradient(135deg, var(--board-bg) 0%, var(--board-bg) 100%);
         }
-        
+
         #boardContainer.hard-mode {
-            background: linear-gradient(135deg, #deb887 0%, #cd9b5e 100%);
+            background: linear-gradient(135deg, var(--board-bg) 0%, #cd9b5e 100%);
         }
 
         #board {
             position: relative;
             width: 100%;
-            aspect-ratio: 1;
+            height: 100%;
             background: #f4d03f;
-            background-image: 
-                repeating-linear-gradient(0deg, #d4a76a 0, #d4a76a 1px, transparent 1px, transparent 100%),
-                repeating-linear-gradient(90deg, #d4a76a 0, #d4a76a 1px, transparent 1px, transparent 100%);
-            border-radius: 5px;
+            background-image:
+                repeating-linear-gradient(0deg, var(--board-lines) 0, var(--board-lines) 1px, transparent 1px, transparent 100%),
+                repeating-linear-gradient(90deg, var(--board-lines) 0, var(--board-lines) 1px, transparent 1px, transparent 100%);
+            border-radius: 0.3125rem;
+            touch-action: none;
         }
 
         .intersection {
             position: absolute;
-            width: 7.69%;
-            height: 7.69%;
+            width: 7.692307692%;
+            height: 7.692307692%;
             cursor: pointer;
             z-index: 3;
             display: flex;
             align-items: center;
             justify-content: center;
+            min-width: max(20px, 5cqw);
+            min-height: max(20px, 5cqw);
+        }
+
+        @container (max-width: 300px) {
+            .intersection {
+                min-width: 18px;
+                min-height: 18px;
+            }
         }
 
         .stone {
-            width: 90%;
-            height: 90%;
+            width: max(85%, 16px);
+            height: max(85%, 16px);
             border-radius: 50%;
             position: relative;
-            transition: opacity 0.3s;
+            transition: opacity 0.3s, transform 0.2s;
             pointer-events: none;
         }
 
         .stone.black {
             background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
-            box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            box-shadow: 0.125rem 0.125rem 0.25rem rgba(0,0,0,0.5);
         }
 
         .stone.white {
             background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
-            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0.125rem 0.125rem 0.25rem rgba(0,0,0,0.3);
             border: 1px solid #ccc;
         }
 
@@ -169,99 +262,320 @@
             width: 40%;
             height: 40%;
             border-radius: 50%;
-            background: rgba(255, 0, 0, 0.6);
+            background: rgba(255, 0, 0, 0.8);
+            animation: pulse 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.8; }
+            to { opacity: 0.4; }
         }
 
         .star-point {
             position: absolute;
-            width: 8px;
-            height: 8px;
+            width: max(0.5rem, 2cqw);
+            height: max(0.5rem, 2cqw);
             background: #2a2a2a;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             z-index: 2;
         }
 
+        @container (max-width: 250px) {
+            .star-point {
+                width: 0.375rem;
+                height: 0.375rem;
+            }
+        }
+
+        .game-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
         #gameInfo {
             display: flex;
-            justify-content: space-around;
-            background: white;
-            border-radius: 15px;
-            padding: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            justify-content: center;
+            align-items: center;
+            gap: clamp(1.5rem, 5vw, 2rem);
+            padding: 0.5rem;
         }
 
-        #settingsBar {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            background: white;
-            border-radius: 15px;
-            padding: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 10px;
-        }
-
-        .settingGroup {
+        .captureItem {
+            font-size: clamp(0.875rem, 3.5vw, 1rem);
+            font-weight: bold;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 0.25rem;
         }
 
-        .settingLabel {
-            font-size: 14px;
-            color: #666;
+        .captureStone {
+            width: clamp(0.875rem, 3.5vw, 1rem);
+            height: clamp(0.875rem, 3.5vw, 1rem);
+            border-radius: 50%;
+            display: inline-block;
         }
 
-        .toggleButton {
-            background: #f0f0f0;
-            border: none;
-            border-radius: 20px;
-            padding: 6px 12px;
-            font-size: 14px;
-            color: #666;
+        .captureStone.black {
+            background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
+            box-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.5);
+        }
+
+        .captureStone.white {
+            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+            box-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.3);
+            border: 1px solid #ccc;
+        }
+
+        .scoreStone {
+            display: inline-block;
+            width: 0.875rem;
+            height: 0.875rem;
+            border-radius: 50%;
+            vertical-align: middle;
+            margin: 0 0.25rem;
+        }
+
+        .scoreStone.black {
+            background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
+            box-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.5);
+        }
+
+        .scoreStone.white {
+            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+            box-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.3);
+            border: 1px solid #ccc;
+        }
+
+
+        .iconButton {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            border: 1px solid #e0e0e0;
+            background: white;
+            font-size: 1.25rem;
             cursor: pointer;
             transition: all 0.2s;
-        }
-
-        .toggleButton.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .difficultySelector {
             display: flex;
-            gap: 5px;
-            background: #f8f8f8;
-            padding: 3px;
-            border-radius: 18px;
+            align-items: center;
+            justify-content: center;
         }
 
-        .difficultyButton {
-            background: transparent;
-            border: none;
-            border-radius: 12px;
-            padding: 6px 12px;
-            font-size: 14px;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.2s;
+        .iconButton:hover {
+            background: #f5f5f5;
+            transform: scale(1.05);
         }
 
-        .difficultyButton:hover {
-            background: rgba(0,0,0,0.05);
-        }
-
-        .difficultyButton.active {
-            background: linear-gradient(135deg, #ffd89b 0%, #ffa751 100%);
+        .iconButton.active {
+            background: var(--primary-gradient);
             color: white;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(255, 167, 81, 0.3);
+            border-color: #10b981;
         }
 
-        .difficultyButton:active {
-            transform: scale(0.95);
+        .iconButton:focus-visible {
+            outline: 2px solid var(--text-primary);
+            outline-offset: 2px;
         }
+
+        .gridIcon {
+            font-weight: bold;
+        }
+
+
+        /* Clean Difficulty Selector with Button Group */
+        .difficultyGroup {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-right: 0.375rem; /* Space for focus outline */
+        }
+
+        .diffLabel {
+            font-size: 0.875rem;
+            color: #666;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .diffButtonGroup {
+            display: flex;
+            border-radius: 0.5rem;
+            overflow: visible;
+            padding: 0.125rem; /* Space for focus outline */
+        }
+
+        .diffButton {
+            width: 2rem;
+            height: 2rem;
+            border: 1px solid #d0d0d0;
+            background: white;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0;
+            margin-left: -1px; /* Overlap borders */
+            position: relative;
+        }
+
+        /* First and last button rounded corners */
+        .diffButton:first-child {
+            border-radius: 0.375rem 0 0 0.375rem;
+            margin-left: 0;
+        }
+
+        .diffButton:last-child {
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+
+        .diffButton:hover {
+            background: #f8f8f8;
+            border-color: #999;
+            z-index: 1; /* Bring to front */
+        }
+
+        .diffButton.active {
+            background: var(--text-primary);
+            color: white;
+            border-color: var(--text-primary);
+            z-index: 2; /* Above hover */
+        }
+
+        /* Subtle color coding - only when active */
+        .diffButton.active[data-difficulty="easy"] {
+            background: var(--difficulty-easy);
+            border-color: var(--difficulty-easy);
+        }
+
+        .diffButton.active[data-difficulty="medium"] {
+            background: var(--difficulty-medium);
+            border-color: var(--difficulty-medium);
+        }
+
+        .diffButton.active[data-difficulty="hard"] {
+            background: var(--difficulty-hard);
+            border-color: var(--difficulty-hard);
+        }
+
+        .diffButton:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 74, 74, 0.25);
+            z-index: 3;
+        }
+
+        /* Colored focus shadows for active buttons */
+        .diffButton.active[data-difficulty="easy"]:focus-visible {
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.25);
+        }
+
+        .diffButton.active[data-difficulty="medium"]:focus-visible {
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.25);
+        }
+
+        .diffButton.active[data-difficulty="hard"]:focus-visible {
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.25);
+        }
+
+        .diffButton:active {
+            background: #e0e0e0;
+        }
+
+        .diffButton.active:active {
+            background: #333;
+        }
+
+        /* Darker shades for active button press states */
+        .diffButton.active[data-difficulty="easy"]:active {
+            background: #388E3C; /* Darker green */
+        }
+
+        .diffButton.active[data-difficulty="medium"]:active {
+            background: #F57C00; /* Darker orange */
+        }
+
+        .diffButton.active[data-difficulty="hard"]:active {
+            background: #D32F2F; /* Darker red */
+        }
+
+        /* Grid Toggle Group - matches difficultyGroup design */
+        .gridToggleGroup {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-right: 0.375rem; /* Space for focus outline */
+        }
+
+        .gridLabel {
+            font-size: 0.875rem;
+            color: #666;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .gridToggle {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+            cursor: pointer;
+        }
+
+        .gridToggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+
+        .gridToggleSlider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 22px;
+            transition: background-color 0.3s, box-shadow 0.2s;
+        }
+
+        .gridToggleSlider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .gridToggle input:checked + .gridToggleSlider {
+            background-color: #4CAF50;
+        }
+
+        .gridToggle input:checked + .gridToggleSlider:before {
+            transform: translateX(18px);
+        }
+
+        .gridToggle input:focus-visible + .gridToggleSlider {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.25);
+        }
+
+        .gridToggle:hover .gridToggleSlider:before {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
 
         #board.no-grid {
             background-image: none;
@@ -269,11 +583,11 @@
         }
 
         #board.no-grid .gridLine {
-            display: block;
+            display: none;
         }
 
         #board:not(.no-grid) .gridLine {
-            display: none;
+            display: block;
         }
 
         .gridLine {
@@ -294,37 +608,27 @@
             height: 100%;
         }
 
-        .infoItem {
-            text-align: center;
-        }
-
-        .infoLabel {
-            font-size: 14px;
-            color: #888;
-            margin-bottom: 5px;
-        }
-
-        .infoValue {
-            font-size: 20px;
-            font-weight: bold;
-            color: #4a4a4a;
-        }
-
         #controls {
             display: flex;
-            gap: 10px;
+            gap: clamp(0.5rem, 2vw, 0.75rem);
+            padding: 0.25rem; /* Prevent focus outline clipping */
         }
 
         .controlButton {
             flex: 1;
-            background: white;
-            border: 2px solid #ddd;
-            border-radius: 15px;
-            padding: 12px;
-            font-size: 18px;
-            color: #666;
+            background: var(--card-bg);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 0.5rem 1.5rem;
+            font-size: clamp(0.875rem, 3.5vw, 1rem);
+            color: var(--text-secondary);
             cursor: pointer;
             transition: all 0.2s;
+            min-height: max(2rem, 44px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .controlButton:active {
@@ -335,6 +639,19 @@
         .controlButton:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        .controlButton:focus-visible {
+            outline: 2px solid var(--text-primary);
+            outline-offset: 2px;
+        }
+
+        #sessionInfo {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: clamp(0.75rem, 3vw, 0.875rem);
+            padding-top: 0.5rem;
+            border-top: 1px solid #eee;
         }
 
         .controlButton.pass {
@@ -354,46 +671,49 @@
         #endGameModal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             background: rgba(0,0,0,0.7);
             z-index: 1000;
             align-items: center;
             justify-content: center;
             overflow-y: auto;
-            padding: 20px;
+            -webkit-overflow-scrolling: touch;
+            padding: clamp(1rem, 4vw, 2rem);
+        }
+
+        #endGameModal.active {
+            display: flex;
         }
 
         .modalContent {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
+            background: var(--card-bg);
+            border-radius: 1.25rem;
+            padding: clamp(1.5rem, 5vw, 2rem);
             text-align: center;
-            max-width: 90%;
+            width: min(90vw, 400px);
             max-height: 90vh;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
 
         .modalTitle {
-            font-size: 28px;
-            color: #4a4a4a;
-            margin-bottom: 20px;
+            font-size: clamp(1.25rem, 5vw, 1.75rem);
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
             font-weight: bold;
         }
 
         .modalScore {
-            font-size: 22px;
-            color: #666;
-            margin-bottom: 15px;
+            font-size: clamp(1rem, 4vw, 1.375rem);
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
         }
 
         .modalMessage {
-            font-size: 18px;
-            color: #888;
-            margin-bottom: 20px;
+            font-size: clamp(0.875rem, 3.5vw, 1.125rem);
+            color: var(--text-secondary);
+            margin-bottom: 1.25rem;
             line-height: 1.4;
         }
 
@@ -561,20 +881,200 @@
             transform: scale(0.95);
         }
 
-        @media (max-width: 380px) {
-            .welcomeTitle { font-size: 24px; }
-            .welcomeMessage { font-size: 18px; }
-            .startButton { font-size: 20px; }
-            #aiMessage { font-size: 16px; }
-            .infoValue { font-size: 18px; }
-            .controlButton { font-size: 16px; }
-            .settingLabel { font-size: 12px; }
-            .toggleButton { padding: 5px 10px; font-size: 13px; }
-            .difficultyButton { padding: 5px 8px; font-size: 12px; }
-            .difficultySelector { gap: 3px; padding: 2px; }
-            .difficultyHint { font-size: 10px; }
-            #settingsBar { flex-direction: column; gap: 8px; }
-            .settingGroup { justify-content: center; }
+        /* Small screens - better single column layout */
+        @media (max-width: 400px) {
+            .header-row {
+                gap: 0.5rem;
+            }
+
+            .difficultyGroup {
+                gap: 0.375rem;
+                padding-right: 0.25rem;
+            }
+
+            .diffLabel {
+                font-size: 0.75rem;
+                margin-right: 0.375rem;
+            }
+
+            .diffButtonGroup {
+                padding: 0.0625rem;
+            }
+
+            .diffButton {
+                width: 1.75rem;
+                height: 1.75rem;
+                font-size: 0.6875rem;
+            }
+
+            .gridToggleGroup {
+                gap: 0.375rem;
+                padding-right: 0.25rem;
+            }
+
+            .gridLabel {
+                font-size: 0.75rem;
+                margin-right: 0.375rem;
+            }
+
+            .gridToggle {
+                width: 36px;
+                height: 20px;
+            }
+
+            .gridToggleSlider {
+                border-radius: 20px;
+            }
+
+            .gridToggleSlider:before {
+                height: 14px;
+                width: 14px;
+            }
+
+            .gridToggle input:checked + .gridToggleSlider:before {
+                transform: translateX(16px);
+            }
+
+            .iconButton {
+                width: 2rem;
+                height: 2rem;
+                font-size: 1rem;
+            }
+        }
+
+        /* Very small screens - compact layout */
+        @media (max-width: 320px) {
+            :root {
+                --touch-target: max(2.5rem, 40px);
+            }
+
+            #gameContainer {
+                padding: 0.5rem;
+                gap: 0.5rem;
+            }
+
+            .header-row {
+                gap: 0.25rem;
+            }
+
+            .gameTitle {
+                font-size: 1.25rem;
+            }
+
+            .difficultyGroup {
+                gap: 0.25rem;
+                padding-right: 0.1875rem;
+            }
+
+            .diffLabel {
+                margin-right: 0.25rem;
+            }
+
+            .gridToggleGroup {
+                gap: 0.25rem;
+                padding-right: 0.1875rem;
+            }
+
+            .gridLabel {
+                margin-right: 0.25rem;
+            }
+
+            .diffButtonGroup {
+                padding: 0.0625rem;
+            }
+
+            .diffButton {
+                width: 1.625rem;
+                height: 1.625rem;
+                font-size: 0.625rem;
+            }
+        }
+
+        /* Large screens - optimize for desktop */
+        @media (min-width: 768px) {
+            body {
+                position: static;
+                overflow: auto;
+                background-attachment: fixed;
+            }
+
+            #gameContainer {
+                height: auto;
+                min-height: 100vh;
+                max-width: 500px;
+                padding: 2rem;
+                grid-template-rows: auto auto 1fr auto;
+            }
+
+            .game-board-area {
+                justify-content: center;
+                align-items: center;
+            }
+
+            #boardContainer {
+                width: min(400px, 60vh);
+            }
+        }
+
+        /* Accessibility - respect reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            :root {
+                --card-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                --text-primary: #000000;
+                --text-secondary: #333333;
+            }
+
+            .stone.black {
+                border: 2px solid #000000;
+            }
+
+            .stone.white {
+                border: 2px solid #333333;
+            }
+        }
+
+        /* Compact mode for small height screens */
+        @media (max-height: 650px) {
+            #gameContainer {
+                gap: 0.25rem;
+            }
+
+            .game-header, .game-footer {
+                gap: 0.25rem;
+            }
+
+            #messageArea {
+                min-height: 2.5rem;
+                padding: 0.5rem;
+            }
+
+            #sessionInfo {
+                font-size: 0.75rem;
+            }
+
+            .controlButton {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+                min-height: 2.5rem;
+            }
+
+            #gameInfo {
+                gap: 1rem;
+                padding: 0.25rem;
+            }
+
+            .captureItem {
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -587,47 +1087,66 @@
         </div>
 
         <div id="gameScreen">
-            <div id="messageArea">
-                <div id="aiMessage">您執黑子，請先下！觸碰任何交叉點落子。</div>
-            </div>
+            <div class="game-header">
+                <div class="header-row">
+                    <div class="gridToggleGroup">
+                        <span class="gridLabel">格線</span>
+                        <label class="gridToggle">
+                            <input type="checkbox" checked onchange="toggleGrid(this.checked)"
+                                   title="格線開關" aria-label="格線開關">
+                            <span class="gridToggleSlider"></span>
+                        </label>
+                    </div>
 
-            <div id="settingsBar">
-                <div class="settingGroup">
-                    <span class="settingLabel">格線：</span>
-                    <button class="toggleButton active" id="gridToggle" onclick="toggleGrid()">開啟</button>
-                </div>
-                <div class="settingGroup">
-                    <span class="settingLabel">難度：</span>
-                    <div class="difficultyWrapper">
-                        <div class="difficultySelector">
-                            <button class="difficultyButton active" onclick="changeDifficulty('easy')">簡單</button>
-                            <button class="difficultyButton" onclick="changeDifficulty('medium')">中等</button>
-                            <button class="difficultyButton" onclick="changeDifficulty('hard')">困難</button>
+                    <h1 class="gameTitle">圍棋</h1>
+
+                    <div class="difficultyGroup">
+                        <span class="diffLabel">難度</span>
+                        <div class="diffButtonGroup" role="group" aria-label="難度選擇">
+                            <button class="diffButton active" data-difficulty="easy" onclick="changeDifficulty('easy')"
+                                    title="簡單模式" aria-label="簡單難度">易</button>
+                            <button class="diffButton" data-difficulty="medium" onclick="changeDifficulty('medium')"
+                                    title="中等難度" aria-label="中等難度">中</button>
+                            <button class="diffButton" data-difficulty="hard" onclick="changeDifficulty('hard')"
+                                    title="困難模式" aria-label="困難難度">難</button>
                         </div>
-                        <div class="difficultyHint" id="difficultyHint" style="font-size: 11px; color: #4CAF50; text-align: center; margin-top: 4px;">和平建設</div>
                     </div>
                 </div>
-            </div>
 
-            <div id="boardContainer">
-                <div id="board"></div>
-            </div>
-
-            <div id="gameInfo">
-                <div class="infoItem">
-                    <div class="infoLabel">黑子擒獲</div>
-                    <div class="infoValue">⚫ <span id="blackCaptures">0</span></div>
-                </div>
-                <div class="infoItem">
-                    <div class="infoLabel">白子擒獲</div>
-                    <div class="infoValue">⚪ <span id="whiteCaptures">0</span></div>
+                <div id="messageArea">
+                    <div id="aiMessage">您執黑子，請先下！觸碰任何交叉點落子。</div>
                 </div>
             </div>
 
-            <div id="controls">
-                <button class="controlButton" onclick="undoMove()">悔棋</button>
-                <button class="controlButton pass" onclick="playerPass()">虛手</button>
-                <button class="controlButton resign" id="resignButton" style="display:none;" onclick="confirmResign()">認輸</button>
+            <div class="game-board-area">
+                <div id="boardContainer">
+                    <div id="board"></div>
+                </div>
+            </div>
+
+            <div class="game-footer">
+                <div id="gameInfo">
+                    <div class="captureItem">
+                        <span>您：</span>
+                        <span id="blackCaptures">0</span>
+                        <span class="captureStone black"></span>
+                    </div>
+                    <div class="captureItem">
+                        <span>小克：</span>
+                        <span id="whiteCaptures">0</span>
+                        <span class="captureStone white"></span>
+                    </div>
+                </div>
+
+                <div id="controls">
+                    <button class="controlButton" onclick="undoMove()">悔棋</button>
+                    <button class="controlButton pass" onclick="playerPass()">虛手</button>
+                    <button class="controlButton resign" id="resignButton" style="display:none;" onclick="confirmResign()">認輸</button>
+                </div>
+
+                <div id="sessionInfo">
+                    第 <span id="sessionGames">0</span> 局 • 今日已玩 <span id="totalGames">0</span> 局
+                </div>
             </div>
         </div>
 
@@ -649,7 +1168,7 @@
                         
                         <p><strong>如何計算分數：</strong><br>
                         🏠 <strong>領地</strong>：您圍住的空地，每格算1分<br>
-                        ⚫ <strong>活棋</strong>：棋盤上您的棋子，每顆算1分<br>
+                        <span class="scoreStone black"></span><strong>活棋</strong>：棋盤上您的棋子，每顆算1分<br>
                         🎯 <strong>提子</strong>：吃掉對方的棋子，每顆算1分</p>
                         
                         <p><strong>貼目是什麼？</strong><br>
@@ -662,7 +1181,7 @@
                 
                 <div class="scoreDetails">
                     <div class="scoreDetail black">
-                        <span class="detailLabel">⚫ 黑子計分</span>
+                        <span class="detailLabel"><span class="scoreStone black"></span>黑子計分</span>
                         <span class="detailValue"></span>
                     </div>
                     <div class="scoreDetail black" id="blackTerritory">
@@ -685,7 +1204,7 @@
                     <div style="margin: 15px 0;"></div>
                     
                     <div class="scoreDetail white">
-                        <span class="detailLabel">⚪ 白子計分</span>
+                        <span class="detailLabel"><span class="scoreStone white"></span>白子計分</span>
                         <span class="detailValue"></span>
                     </div>
                     <div class="scoreDetail white" id="whiteTerritory">
@@ -737,9 +1256,17 @@
         let gameCount = 0;
         let winCount = 0;
         let lossCount = 0;
+        let sessionGames = 0;
+        let totalGamesToday = 0;
         let gridEnabled = true;
         let difficulty = 'easy'; // easy, medium, hard
         let difficultyAdjustment = true; // Auto-adjust difficulty based on performance
+
+        // Update session information display
+        function updateSessionInfo() {
+            document.getElementById('sessionGames').textContent = sessionGames;
+            document.getElementById('totalGames').textContent = totalGamesToday;
+        }
 
         const aiMessages = {
             opening: [
@@ -886,18 +1413,26 @@
             }
         }
 
-        function toggleGrid() {
-            gridEnabled = !gridEnabled;
-            const toggleButton = document.getElementById('gridToggle');
+        function toggleGrid(enable) {
+            // If no parameter provided, toggle current state
+            if (enable === undefined) {
+                gridEnabled = !gridEnabled;
+            } else {
+                gridEnabled = enable;
+            }
+
             const boardElement = document.getElementById('board');
-            
+            const checkbox = document.querySelector('.gridToggle input');
+
+            // Update checkbox state (only if it's different to avoid infinite loop)
+            if (checkbox && checkbox.checked !== gridEnabled) {
+                checkbox.checked = gridEnabled;
+            }
+
+            // Update board grid visibility
             if (gridEnabled) {
-                toggleButton.classList.add('active');
-                toggleButton.textContent = '開啟';
                 boardElement.classList.remove('no-grid');
             } else {
-                toggleButton.classList.remove('active');
-                toggleButton.textContent = '關閉';
                 boardElement.classList.add('no-grid');
             }
         }
@@ -922,32 +1457,14 @@
         function changeDifficulty(level) {
             difficulty = level;
             
-            // Update all button states
-            document.querySelectorAll('.difficultyButton').forEach(btn => {
-                btn.classList.remove('active');
+            // Simple class toggle
+            document.querySelectorAll('.diffButton').forEach((btn, index) => {
+                btn.classList.toggle('active',
+                    (level === 'easy' && index === 0) ||
+                    (level === 'medium' && index === 1) ||
+                    (level === 'hard' && index === 2)
+                );
             });
-            
-            // Set active button based on level
-            if (level === 'easy') {
-                document.querySelectorAll('.difficultyButton')[0].classList.add('active');
-            } else if (level === 'medium') {
-                document.querySelectorAll('.difficultyButton')[1].classList.add('active');
-            } else if (level === 'hard') {
-                document.querySelectorAll('.difficultyButton')[2].classList.add('active');
-            }
-            
-            // Update hint text - directly set it based on level
-            const hintElement = document.getElementById('difficultyHint');
-            if (level === 'easy') {
-                hintElement.textContent = '和平建設';
-                hintElement.style.color = '#4CAF50'; // Green
-            } else if (level === 'medium') {
-                hintElement.textContent = '攻守平衡';
-                hintElement.style.color = '#FF9800'; // Orange
-            } else if (level === 'hard') {
-                hintElement.textContent = '激烈戰鬥';
-                hintElement.style.color = '#F44336'; // Red
-            }
             
             // Update board style
             updateBoardStyle();
@@ -970,9 +1487,9 @@
 
         function setDifficulty(level) {
             difficulty = level;
-            
+
             // Update button states
-            document.querySelectorAll('.difficultyButton').forEach(btn => {
+            document.querySelectorAll('.diffButton').forEach(btn => {
                 btn.classList.remove('active');
                 if ((level === 'easy' && btn.textContent === '簡單') ||
                     (level === 'medium' && btn.textContent === '中等') ||
@@ -1031,9 +1548,9 @@
 
         function setDifficultyLevel(level) {
             difficulty = level;
-            
+
             // Update button states
-            document.querySelectorAll('.difficultyButton').forEach(btn => {
+            document.querySelectorAll('.diffButton').forEach(btn => {
                 btn.classList.remove('active');
                 if ((level === 'easy' && btn.textContent === '簡單') ||
                     (level === 'medium' && btn.textContent === '中等') ||
@@ -1851,6 +2368,11 @@
                 lossCount++;
             }
 
+            // Update totalGamesToday and save to localStorage
+            totalGamesToday++;
+            localStorage.setItem('goGamesToday', totalGamesToday.toString());
+            updateSessionInfo();
+
             // Auto-adjust difficulty if enabled
             adjustDifficultyAutomatically();
 
@@ -1894,18 +2416,22 @@
                 endMessage.textContent = `${personalityText} 我贏了${difference.toFixed(1)}目。今日戰績: ${winCount}勝${lossCount}負`;
             }
             
-            modal.style.display = 'flex';
+            modal.classList.add('active');
         }
 
         function newGame() {
-            document.getElementById('endGameModal').style.display = 'none';
-            
+            document.getElementById('endGameModal').classList.remove('active');
+
             // Clear territory markings from previous game
             clearTerritories();
-            
+
             initBoard();
             renderBoard();
             gameStarted = true;
+
+            // Update session tracking
+            sessionGames++;
+            updateSessionInfo();
             
             // Reset explanation section
             const explanationSection = document.getElementById('explanationSection');
@@ -1922,9 +2448,9 @@
         }
 
         function takeBreak() {
-            document.getElementById('endGameModal').style.display = 'none';
+            document.getElementById('endGameModal').classList.remove('active');
             clearTerritories();
-            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('gameScreen').classList.remove('active');
             document.getElementById('welcomeScreen').style.display = 'block';
             
             const welcomeMessage = document.querySelector('.welcomeMessage');
@@ -1947,30 +2473,38 @@
 
         function startGame() {
             document.getElementById('welcomeScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'block';
-            
+            document.getElementById('gameScreen').classList.add('active');
+
             initBoard();
             createBoard();
             renderBoard();
             gameStarted = true;
-            
+
+            // Initialize session tracking
+            totalGamesToday = parseInt(localStorage.getItem('goGamesToday') || '0');
+            const today = new Date().toDateString();
+            const lastPlayDate = localStorage.getItem('goLastPlayDate');
+
+            if (lastPlayDate !== today) {
+                totalGamesToday = 0;
+                localStorage.setItem('goLastPlayDate', today);
+            }
+
+            updateSessionInfo();
+
             // Enable auto-adjustment for new session
             if (gameCount === 0) {
                 difficultyAdjustment = true;
             }
             
             // Initialize settings UI
-            const gridToggle = document.getElementById('gridToggle');
-            if (gridEnabled) {
-                gridToggle.classList.add('active');
-                gridToggle.textContent = '開啟';
-            } else {
-                gridToggle.classList.remove('active');
-                gridToggle.textContent = '關閉';
+            const gridCheckbox = document.querySelector('.gridToggle input');
+            if (gridCheckbox) {
+                gridCheckbox.checked = gridEnabled;
             }
             
             // Set initial difficulty buttons and hint
-            document.querySelectorAll('.difficultyButton').forEach((btn, index) => {
+            document.querySelectorAll('.diffButton').forEach((btn, index) => {
                 btn.classList.remove('active');
                 if ((difficulty === 'easy' && index === 0) ||
                     (difficulty === 'medium' && index === 1) ||
@@ -1978,21 +2512,6 @@
                     btn.classList.add('active');
                 }
             });
-            
-            // Set difficulty hint text with color - directly based on difficulty variable
-            const hintElement = document.getElementById('difficultyHint');
-            if (hintElement) {
-                if (difficulty === 'easy') {
-                    hintElement.textContent = '和平建設';
-                    hintElement.style.color = '#4CAF50';
-                } else if (difficulty === 'medium') {
-                    hintElement.textContent = '攻守平衡';
-                    hintElement.style.color = '#FF9800';
-                } else if (difficulty === 'hard') {
-                    hintElement.textContent = '激烈戰鬥';
-                    hintElement.style.color = '#F44336';
-                }
-            }
             
             // Set board style based on difficulty
             updateBoardStyle();

@@ -2,109 +2,160 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>五子棋 - 與小克對弈</title>
     <style>
+        :root {
+            --primary-bg: linear-gradient(135deg, #f5f5dc 0%, #e8ddc0 100%);
+            --card-bg: white;
+            --card-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --board-bg: #b45309;
+            --board-inner: #d97706;
+            --board-lines: #8b4513;
+            --text-primary: #4a4a4a;
+            --text-secondary: #666;
+            --border-radius: 0.9375rem;
+            --touch-target: max(2.75rem, 44px);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
-            user-select: none;
+        }
+
+        html {
+            font-size: clamp(14px, 4vw, 18px);
+            overflow: hidden;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "微軟正黑體", sans-serif;
-            background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 10px;
-            touch-action: manipulation;
+            background: var(--primary-bg);
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            overscroll-behavior: none;
+            user-select: none;
+            padding: 0;
         }
 
         #gameContainer {
+            display: grid;
+            grid-template-rows: 1fr;
+            height: 100%;
             width: 100%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            max-width: min(400px, 90vw);
+            margin: 0 auto;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            padding: clamp(0.5rem, 2vw, 1rem);
+            box-sizing: border-box;
         }
 
         #welcomeScreen {
+            grid-column: 1;
+            grid-row: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            padding: 30px 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: clamp(1.25rem, 5vw, 2rem);
+            gap: 1rem;
         }
 
         .welcomeTitle {
-            font-size: 32px;
-            color: #4a4a4a;
-            margin-bottom: 15px;
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            color: var(--text-primary);
             font-weight: bold;
+            line-height: 1.2;
         }
 
         .welcomeMessage {
-            font-size: 20px;
-            color: #666;
-            margin-bottom: 30px;
+            font-size: clamp(1rem, 4vw, 1.25rem);
+            color: var(--text-secondary);
             line-height: 1.6;
+            max-width: 20ch;
         }
 
         .startButton {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: var(--primary-gradient);
             color: white;
             border: none;
-            border-radius: 25px;
-            padding: 15px 40px;
-            font-size: 22px;
+            border-radius: 1.5625rem;
+            padding: 0.75rem 2.5rem;
+            font-size: clamp(1rem, 4vw, 1.375rem);
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
             transition: transform 0.2s;
+            min-height: var(--touch-target);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .startButton:active {
             transform: scale(0.95);
         }
 
+        .startButton:focus-visible {
+            outline: 2px solid var(--text-primary);
+            outline-offset: 2px;
+        }
+
         #gameScreen {
             display: none;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            gap: clamp(0.5rem, 2vw, 1rem);
         }
 
-        #gameHeader {
-            text-align: center;
+        #gameScreen.active {
+            display: flex;
         }
+
+        .game-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
 
         .gameTitle {
-            font-size: 28px;
+            font-size: clamp(1.25rem, 5vw, 1.75rem);
             font-weight: bold;
-            color: #4a4a4a;
-            margin-bottom: 10px;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            text-align: center;
         }
 
         #scoreArea {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 30px;
-            margin-bottom: 15px;
+            gap: clamp(1.5rem, 5vw, 2rem);
+            margin-bottom: 0.75rem;
         }
 
         .scoreItem {
-            font-size: 18px;
+            font-size: clamp(0.875rem, 3.5vw, 1.125rem);
             font-weight: bold;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 0.5rem;
         }
 
         .stone {
-            width: 24px;
-            height: 24px;
+            width: clamp(1.25rem, 4vw, 1.5rem);
+            height: clamp(1.25rem, 4vw, 1.5rem);
             border-radius: 50%;
             display: inline-block;
         }
@@ -119,55 +170,78 @@
         }
 
         #messageArea {
-            background: white;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            min-height: 80px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: clamp(0.75rem, 3vw, 1rem);
+            box-shadow: var(--card-shadow);
+            min-height: clamp(2.5rem, 6vw, 3.5rem);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         #aiMessage {
-            font-size: 18px;
-            color: #4a4a4a;
+            font-size: clamp(0.875rem, 3.5vw, 1.125rem);
+            color: var(--text-primary);
             text-align: center;
             line-height: 1.5;
         }
 
+        .game-board-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            min-height: 0;
+        }
+
         #boardContainer {
-            background: #b45309;
-            border-radius: 10px;
-            padding: 10px;
+            background: var(--board-bg);
+            border-radius: 0.625rem;
+            padding: clamp(0.5rem, 2vw, 0.75rem);
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             position: relative;
+            width: min(80vw, 80vh, 400px);
+            aspect-ratio: 1;
+            container-type: inline-size;
         }
 
         #gameBoard {
-            background: #d97706;
-            padding: 2px;
+            background: var(--board-inner);
+            padding: 0.125rem;
             position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 0.3125rem;
+            touch-action: none;
         }
 
         .boardRow {
             display: flex;
+            width: 100%;
+            height: calc(100% / 13);
         }
 
         .boardCell {
-            width: 26px;
-            height: 26px;
+            width: calc(100% / 13);
+            height: 100%;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            min-width: max(18px, 5cqw);
+            min-height: max(18px, 5cqw);
         }
 
-        @media (min-width: 380px) {
+        @container (max-width: 280px) {
             .boardCell {
-                width: 28px;
-                height: 28px;
+                min-width: 16px;
+                min-height: 16px;
             }
         }
 
@@ -178,36 +252,39 @@
         }
 
         .gridLine {
-            stroke: #8b4513;
+            stroke: var(--board-lines);
             stroke-width: 1;
         }
 
         .placedStone {
-            width: 22px;
-            height: 22px;
+            width: max(80%, 16px);
+            height: max(80%, 16px);
             border-radius: 50%;
             z-index: 10;
             position: relative;
+            transition: transform 0.2s;
         }
 
-        @media (min-width: 380px) {
+        @container (min-width: 350px) {
             .placedStone {
-                width: 24px;
-                height: 24px;
+                width: max(85%, 20px);
+                height: max(85%, 20px);
             }
         }
 
         .placedStone.black {
-            background: #000;
+            background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
+            box-shadow: 0.125rem 0.125rem 0.25rem rgba(0,0,0,0.5);
         }
 
         .placedStone.white {
-            background: #fff;
-            border: 1px solid #333;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+            border: 1px solid #ccc;
+            box-shadow: 0.125rem 0.125rem 0.25rem rgba(0,0,0,0.3);
         }
 
         .placedStone.lastMove {
-            box-shadow: 0 0 0 2px #ef4444;
+            box-shadow: 0 0 0 2px #ef4444, 0.125rem 0.125rem 0.25rem rgba(0,0,0,0.5);
         }
 
         .placedStone.winning {
@@ -220,25 +297,25 @@
         }
 
         .hoverPreview {
-            width: 22px;
-            height: 22px;
+            width: max(75%, 14px);
+            height: max(75%, 14px);
             border-radius: 50%;
             background: rgba(0, 0, 0, 0.3);
             z-index: 5;
             position: relative;
         }
 
-        @media (min-width: 380px) {
+        @container (min-width: 350px) {
             .hoverPreview {
-                width: 24px;
-                height: 24px;
+                width: max(80%, 18px);
+                height: max(80%, 18px);
             }
         }
 
         .starPoint {
             position: absolute;
-            width: 6px;
-            height: 6px;
+            width: max(0.375rem, 1.5cqw);
+            height: max(0.375rem, 1.5cqw);
             background: #000;
             border-radius: 50%;
             top: 50%;
@@ -247,31 +324,66 @@
             z-index: 1;
         }
 
-        #controlButtons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 15px;
+        @container (max-width: 250px) {
+            .starPoint {
+                width: 0.25rem;
+                height: 0.25rem;
+            }
         }
 
+        .game-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        #gameActions {
+            min-height: 3rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.25rem 0;
+            gap: 0.5rem;
+        }
+
+        #gameActions .gameButton {
+            display: none;
+        }
+
+        #gameActions .gameButton.show {
+            display: flex;
+        }
+
+
         .gameButton {
-            padding: 12px 30px;
-            font-size: 18px;
+            padding: clamp(0.75rem, 3vw, 1rem) clamp(1.25rem, 4vw, 2rem);
+            font-size: clamp(0.875rem, 3.5vw, 1.125rem);
             font-weight: bold;
             border: none;
-            border-radius: 15px;
+            border-radius: var(--border-radius);
             color: white;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             transition: transform 0.2s;
+            min-height: var(--touch-target);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .gameButton:active {
             transform: scale(0.95);
         }
 
+        .gameButton:focus-visible {
+            outline: 2px solid var(--text-primary);
+            outline-offset: 2px;
+        }
+
         .gameButton.start {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: var(--primary-gradient);
         }
 
         .gameButton.restart {
@@ -282,15 +394,136 @@
             background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
         }
 
+        .gameButton.inline {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.875rem;
+            min-height: 2rem;
+            border-radius: 1rem;
+        }
+
         #sessionInfo {
             text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin-top: 10px;
+            color: var(--text-secondary);
+            font-size: clamp(0.75rem, 3vw, 0.875rem);
         }
 
         .hidden {
             display: none !important;
+        }
+
+        /* Small screens - better layout */
+        @media (max-width: 400px) {
+
+            #scoreArea {
+                gap: 1rem;
+            }
+
+            .scoreItem {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Very small screens */
+        @media (max-width: 320px) {
+            :root {
+                --touch-target: max(2.5rem, 40px);
+            }
+
+            #gameContainer {
+                padding: 0.5rem;
+                gap: 0.5rem;
+            }
+        }
+
+        /* Large screens */
+        @media (min-width: 768px) {
+            body {
+                position: static;
+                overflow: auto;
+                background-attachment: fixed;
+            }
+
+            #gameContainer {
+                height: auto;
+                min-height: 100vh;
+                max-width: 500px;
+                padding: 2rem;
+            }
+
+            .game-board-area {
+                justify-content: center;
+                align-items: center;
+            }
+
+            #boardContainer {
+                width: min(400px, 60vh);
+            }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @media (prefers-contrast: high) {
+            :root {
+                --card-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                --text-primary: #000000;
+                --text-secondary: #333333;
+            }
+
+            .placedStone.black {
+                border: 2px solid #000000;
+            }
+
+            .placedStone.white {
+                border: 2px solid #333333;
+            }
+        }
+
+        /* Compact mode for small height screens */
+        @media (max-height: 650px) {
+            #gameContainer {
+                gap: 0.25rem;
+            }
+
+            .game-header, .game-footer {
+                gap: 0.25rem;
+            }
+
+            #messageArea {
+                min-height: 2.5rem;
+                padding: 0.5rem;
+            }
+
+            #gameActions {
+                min-height: 2.5rem;
+                padding: 0.125rem 0;
+            }
+
+
+            #scoreArea {
+                gap: 1rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .scoreItem {
+                font-size: 0.75rem;
+            }
+
+            .gameButton {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+                min-height: 2.5rem;
+            }
+
+            #sessionInfo {
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -308,7 +541,7 @@
 
         <!-- Game Screen -->
         <div id="gameScreen">
-            <div id="gameHeader">
+            <div class="game-header">
                 <h1 class="gameTitle">五子棋</h1>
                 <div id="scoreArea">
                     <div class="scoreItem">
@@ -322,25 +555,29 @@
                         <span class="stone whiteStone"></span>
                     </div>
                 </div>
+
+                <div id="messageArea">
+                    <div id="aiMessage">準備開始...</div>
+                </div>
             </div>
 
-            <div id="messageArea">
-                <div id="aiMessage">準備開始...</div>
+            <div class="game-board-area">
+                <div id="boardContainer">
+                    <div id="gameBoard"></div>
+                </div>
             </div>
 
-            <div id="boardContainer">
-                <div id="gameBoard"></div>
-            </div>
+            <div class="game-footer">
+                <div id="gameActions">
+                    <button class="gameButton inline restart hidden" onclick="startNewGame()">再來一局</button>
+                    <button class="gameButton inline newSession hidden" onclick="newSession()">新局</button>
+                </div>
 
-            <div id="controlButtons">
-                <button id="startBtn" class="gameButton start hidden" onclick="startNewGame()">開始下棋</button>
-                <button id="restartBtn" class="gameButton restart hidden" onclick="startNewGame()">再來一局</button>
-                <button id="newSessionBtn" class="gameButton newSession hidden" onclick="newSession()">新局</button>
+                <div id="sessionInfo">
+                    第 <span id="sessionGames">0</span> 局 • 今日已玩 <span id="totalGames">0</span> 局
+                </div>
             </div>
-
-            <div id="sessionInfo">
-                第 <span id="sessionGames">0</span> 局 • 今日已玩 <span id="totalGames">0</span> 局
-            </div>
+        </div>
         </div>
     </div>
 
@@ -538,7 +775,10 @@
                 winningLine = playerWin;
                 renderBoard();
                 score.player++;
+                totalGamesToday++;
+                localStorage.setItem('gomokuGamesToday', totalGamesToday.toString());
                 updateScore();
+                updateSessionInfo();
                 showMessage(getLocalResponse('playerWin'));
                 gameActive = false;
                 isProcessing = false;
@@ -604,7 +844,10 @@
                 winningLine = npcWin;
                 renderBoard();
                 score.npc++;
+                totalGamesToday++;
+                localStorage.setItem('gomokuGamesToday', totalGamesToday.toString());
                 updateScore();
+                updateSessionInfo();
                 showMessage(getLocalResponse('npcWin'));
                 gameActive = false;
                 isProcessing = false;
@@ -865,14 +1108,17 @@
 
         // Show appropriate end buttons
         function showEndButtons() {
-            document.getElementById('startBtn').classList.add('hidden');
-            document.getElementById('restartBtn').classList.add('hidden');
-            document.getElementById('newSessionBtn').classList.add('hidden');
+            const restartButton = document.querySelector('#gameActions .restart');
+            const newSessionButton = document.querySelector('#gameActions .newSession');
+
+            // Hide both buttons first
+            restartButton.classList.remove('show');
+            newSessionButton.classList.remove('show');
 
             if (sessionGames < 5) {
-                document.getElementById('restartBtn').classList.remove('hidden');
+                restartButton.classList.add('show');
             } else {
-                document.getElementById('newSessionBtn').classList.remove('hidden');
+                newSessionButton.classList.add('show');
                 // End session message
                 setTimeout(() => {
                     showMessage(
@@ -883,10 +1129,19 @@
             }
         }
 
+        // Hide end buttons from game actions
+        function hideEndButtons() {
+            const restartButton = document.querySelector('#gameActions .restart');
+            const newSessionButton = document.querySelector('#gameActions .newSession');
+
+            restartButton.classList.remove('show');
+            newSessionButton.classList.remove('show');
+        }
+
         // Start first game
         function startFirstGame() {
             document.getElementById('welcomeScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'block';
+            document.getElementById('gameScreen').classList.add('active');
 
             // Initialize session
             totalGamesToday = parseInt(localStorage.getItem('gomokuGamesToday') || '0');
@@ -903,21 +1158,18 @@
 
         // Start new game
         function startNewGame() {
+            hideEndButtons();
             initBoard();
             gameActive = true;
             isProcessing = false;
             sessionGames++;
-            totalGamesToday++;
 
-            // Save to localStorage
-            localStorage.setItem('gomokuGamesToday', totalGamesToday.toString());
+            // Note: totalGamesToday is now incremented only when games are completed (won)
 
             updateSessionInfo();
 
-            // Hide all buttons during game
-            document.getElementById('startBtn').classList.add('hidden');
-            document.getElementById('restartBtn').classList.add('hidden');
-            document.getElementById('newSessionBtn').classList.add('hidden');
+            // Clear any buttons during game (now handled by gameActions)
+            hideEndButtons();
 
             // Show greeting
             showMessage(getLocalResponse('greetings'));
@@ -940,7 +1192,7 @@
             updateScore();
 
             // Show welcome screen again
-            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('gameScreen').classList.remove('active');
             document.getElementById('welcomeScreen').style.display = 'block';
 
             const welcomeMessage = document.querySelector('.welcomeMessage');
