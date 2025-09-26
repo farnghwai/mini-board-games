@@ -4,131 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>圍棋 - 與小克對弈</title>
+    <link rel="stylesheet" href="shared-styles.css">
     <style>
         :root {
-            --primary-bg: linear-gradient(135deg, #f5f5dc 0%, #e8ddc0 100%);
-            --card-bg: white;
-            --card-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            /* Game-specific color overrides */
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow-button: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+            /* Go-specific board variables */
             --board-bg: #deb887;
             --board-lines: #d4a76a;
-            --text-primary: #4a4a4a;
-            --text-secondary: #666;
-            --border-radius: 0.9375rem; /* 15px */
-            --touch-target: max(2.75rem, 44px);
-            --difficulty-easy: #4CAF50;    /* Green */
-            --difficulty-medium: #FF9800;   /* Orange */
-            --difficulty-hard: #F44336;     /* Red */
+            --board-easy-start: #d4c5a9;
+            --board-medium-start: var(--board-bg);
+            --board-medium-end: #cd9b5e;
+
+            /* Go stone variables */
+            --stone-black-gradient: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
+            --stone-white-gradient: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+            --stone-white-border: #ccc;
+            --stone-black-border-hc: #000000;
+            --stone-white-border-hc: #333333;
+            --shadow-capture-black: 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.5);
+            --shadow-capture-white: 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.3);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        /* Base styles now in shared-styles.css */
 
-        html {
-            font-size: clamp(14px, 4vw, 18px);
-            overflow: hidden;
-        }
+        /* Welcome screen styles now in shared-styles.css */
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "微軟正黑體", sans-serif;
-            background: var(--primary-bg);
-            position: fixed;
-            inset: 0;
-            overflow: hidden;
-            overscroll-behavior: none;
-            user-select: none;
-            padding: 0;
-        }
+        /* Start button styles now in shared-styles.css */
 
-        #gameContainer {
-            display: grid;
-            grid-template-rows: 1fr;
-            height: 100%;
-            width: 100%;
-            max-width: min(400px, 90vw);
-            margin: 0 auto;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-            padding: clamp(0.5rem, 2vw, 1rem);
-            box-sizing: border-box;
-        }
-
-        #welcomeScreen {
-            grid-column: 1;
-            grid-row: 1 / -1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            background: var(--card-bg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--card-shadow);
-            padding: clamp(1.25rem, 5vw, 2rem);
-            gap: 1rem;
-        }
-
-        .welcomeTitle {
-            font-size: clamp(1.5rem, 5vw, 1.75rem);
-            color: var(--text-primary);
-            font-weight: bold;
-            line-height: 1.2;
-        }
-
-        .welcomeMessage {
-            font-size: clamp(1rem, 4vw, 1.25rem);
-            color: var(--text-secondary);
-            line-height: 1.6;
-            max-width: 20ch;
-        }
-
-        .startButton {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            border-radius: 1.5625rem;
-            padding: 0.75rem 2.5rem;
-            font-size: clamp(1rem, 4vw, 1.375rem);
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transition: transform 0.2s;
-            min-height: var(--touch-target);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .startButton:active {
-            transform: scale(0.95);
-        }
-
-        .startButton:focus-visible {
-            outline: 2px solid var(--text-primary);
-            outline-offset: 2px;
-        }
-
-        #gameScreen {
-            display: none;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-            gap: clamp(0.5rem, 2vw, 1rem);
-        }
-
-        #gameScreen.active {
-            display: flex;
-        }
-
-        .game-header {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            flex-shrink: 0;
-        }
+        /* Game screen and header styles now in shared-styles.css */
         .header-row {
             display: flex;
             justify-content: space-between;
@@ -137,71 +43,34 @@
         }
 
 
-        .gameTitle {
+        .game-title {
             font-size: clamp(1.25rem, 5vw, 1.75rem);
             font-weight: bold;
             color: var(--text-primary);
             margin: 0;
         }
 
-        #messageArea {
-            background: var(--card-bg);
-            border-radius: var(--border-radius);
-            padding: clamp(0.75rem, 3vw, 1rem);
-            box-shadow: var(--card-shadow);
-            min-height: clamp(3rem, 8vw, 4rem);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+
+
+        /* #board-container styles now in shared-styles.css */
+
+        #board-container.easy-mode {
+            background: linear-gradient(135deg, var(--board-easy-start) 0%, var(--board-bg) 100%);
         }
 
-        #aiMessage {
-            font-size: clamp(0.875rem, 3.5vw, 1.125rem);
-            color: var(--text-primary);
-            text-align: center;
-            line-height: 1.4;
+        #board-container.medium-mode {
+            background: linear-gradient(135deg, var(--board-medium-start) 0%, var(--board-medium-end) 100%);
         }
 
-        .game-board-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-            flex: 1;
-            min-height: 0;
-        }
-
-        #boardContainer {
-            background: var(--board-bg);
-            border-radius: 0.625rem;
-            padding: clamp(0.5rem, 2vw, 0.75rem);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            position: relative;
-            transition: background 0.3s ease;
-            width: min(80vw, 80vh, 400px);
-            aspect-ratio: 1;
-            container-type: inline-size;
-        }
-
-        #boardContainer.easy-mode {
-            background: linear-gradient(135deg, #d4c5a9 0%, var(--board-bg) 100%);
-        }
-
-        #boardContainer.medium-mode {
-            background: linear-gradient(135deg, var(--board-bg) 0%, var(--board-bg) 100%);
-        }
-
-        #boardContainer.hard-mode {
-            background: linear-gradient(135deg, var(--board-bg) 0%, #cd9b5e 100%);
+        #board-container.hard-mode {
+            background: linear-gradient(135deg, var(--board-bg) 0%, var(--board-medium-end) 100%);
         }
 
         #board {
             position: relative;
             width: 100%;
             height: 100%;
-            background: #f4d03f;
+            background: var(--board-surface);
             background-image:
                 repeating-linear-gradient(0deg, var(--board-lines) 0, var(--board-lines) 1px, transparent 1px, transparent 100%),
                 repeating-linear-gradient(90deg, var(--board-lines) 0, var(--board-lines) 1px, transparent 1px, transparent 100%);
@@ -239,14 +108,14 @@
         }
 
         .stone.black {
-            background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
-            box-shadow: 0.125rem 0.125rem 0.25rem rgba(0,0,0,0.5);
+            background: var(--stone-black-gradient);
+            box-shadow: var(--shadow-stone-black);
         }
 
         .stone.white {
-            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
-            box-shadow: 0.125rem 0.125rem 0.25rem rgba(0,0,0,0.3);
-            border: 1px solid #ccc;
+            background: var(--stone-white-gradient);
+            box-shadow: var(--shadow-stone-white);
+            border: 1px solid var(--stone-white-border);
         }
 
         .stone.preview {
@@ -275,7 +144,7 @@
             position: absolute;
             width: max(0.5rem, 2cqw);
             height: max(0.5rem, 2cqw);
-            background: #2a2a2a;
+            background: var(--modal-overlay);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             z-index: 2;
@@ -288,14 +157,8 @@
             }
         }
 
-        .game-footer {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            flex-shrink: 0;
-        }
 
-        #gameInfo {
+        #game-info {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -303,7 +166,7 @@
             padding: 0.5rem;
         }
 
-        .captureItem {
+        .capture-item {
             font-size: clamp(0.875rem, 3.5vw, 1rem);
             font-weight: bold;
             color: var(--text-primary);
@@ -312,25 +175,25 @@
             gap: 0.25rem;
         }
 
-        .captureStone {
+        .capture-stone {
             width: clamp(0.875rem, 3.5vw, 1rem);
             height: clamp(0.875rem, 3.5vw, 1rem);
             border-radius: 50%;
             display: inline-block;
         }
 
-        .captureStone.black {
-            background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
-            box-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.5);
+        .capture-stone.black {
+            background: var(--stone-black-gradient);
+            box-shadow: var(--shadow-capture-black);
         }
 
-        .captureStone.white {
-            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
-            box-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.3);
-            border: 1px solid #ccc;
+        .capture-stone.white {
+            background: var(--stone-white-gradient);
+            box-shadow: var(--shadow-capture-white);
+            border: 1px solid var(--stone-white-border);
         }
 
-        .scoreStone {
+        .score-stone {
             display: inline-block;
             width: 0.875rem;
             height: 0.875rem;
@@ -339,76 +202,43 @@
             margin: 0 0.25rem;
         }
 
-        .scoreStone.black {
+        .score-stone.black {
             background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
             box-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.5);
         }
 
-        .scoreStone.white {
+        .score-stone.white {
             background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
             box-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.3);
             border: 1px solid #ccc;
         }
 
 
-        .iconButton {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 50%;
-            border: 1px solid #e0e0e0;
-            background: white;
-            font-size: 1.25rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .iconButton:hover {
-            background: #f5f5f5;
-            transform: scale(1.05);
-        }
-
-        .iconButton.active {
-            background: var(--primary-gradient);
-            color: white;
-            border-color: #10b981;
-        }
-
-        .iconButton:focus-visible {
-            outline: 2px solid var(--text-primary);
-            outline-offset: 2px;
-        }
-
-        .gridIcon {
-            font-weight: bold;
-        }
 
 
         /* Clean Difficulty Selector with Button Group */
-        .difficultyGroup {
+        .difficulty-group {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             padding-right: 0.375rem; /* Space for focus outline */
         }
 
-        .diffLabel {
+        .diff-label {
             font-size: 0.875rem;
             color: #666;
             font-weight: 500;
             margin-right: 0.5rem;
         }
 
-        .diffButtonGroup {
+        .diff-button-group {
             display: flex;
             border-radius: 0.5rem;
             overflow: visible;
             padding: 0.125rem; /* Space for focus outline */
         }
 
-        .diffButton {
+        .diff-button {
             width: 2rem;
             height: 2rem;
             border: 1px solid #d0d0d0;
@@ -427,22 +257,22 @@
         }
 
         /* First and last button rounded corners */
-        .diffButton:first-child {
+        .diff-button:first-child {
             border-radius: 0.375rem 0 0 0.375rem;
             margin-left: 0;
         }
 
-        .diffButton:last-child {
+        .diff-button:last-child {
             border-radius: 0 0.375rem 0.375rem 0;
         }
 
-        .diffButton:hover {
+        .diff-button:hover {
             background: #f8f8f8;
             border-color: #999;
             z-index: 1; /* Bring to front */
         }
 
-        .diffButton.active {
+        .diff-button.active {
             background: var(--text-primary);
             color: white;
             border-color: var(--text-primary);
@@ -450,77 +280,77 @@
         }
 
         /* Subtle color coding - only when active */
-        .diffButton.active[data-difficulty="easy"] {
+        .diff-button.active[data-difficulty="easy"] {
             background: var(--difficulty-easy);
             border-color: var(--difficulty-easy);
         }
 
-        .diffButton.active[data-difficulty="medium"] {
+        .diff-button.active[data-difficulty="medium"] {
             background: var(--difficulty-medium);
             border-color: var(--difficulty-medium);
         }
 
-        .diffButton.active[data-difficulty="hard"] {
+        .diff-button.active[data-difficulty="hard"] {
             background: var(--difficulty-hard);
             border-color: var(--difficulty-hard);
         }
 
-        .diffButton:focus-visible {
+        .diff-button:focus-visible {
             outline: none;
             box-shadow: 0 0 0 3px rgba(74, 74, 74, 0.25);
             z-index: 3;
         }
 
         /* Colored focus shadows for active buttons */
-        .diffButton.active[data-difficulty="easy"]:focus-visible {
+        .diff-button.active[data-difficulty="easy"]:focus-visible {
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.25);
         }
 
-        .diffButton.active[data-difficulty="medium"]:focus-visible {
+        .diff-button.active[data-difficulty="medium"]:focus-visible {
             box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.25);
         }
 
-        .diffButton.active[data-difficulty="hard"]:focus-visible {
+        .diff-button.active[data-difficulty="hard"]:focus-visible {
             box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.25);
         }
 
-        .diffButton:active {
+        .diff-button:active {
             background: #e0e0e0;
         }
 
-        .diffButton.active:active {
+        .diff-button.active:active {
             background: #333;
         }
 
         /* Darker shades for active button press states */
-        .diffButton.active[data-difficulty="easy"]:active {
+        .diff-button.active[data-difficulty="easy"]:active {
             background: #388E3C; /* Darker green */
         }
 
-        .diffButton.active[data-difficulty="medium"]:active {
+        .diff-button.active[data-difficulty="medium"]:active {
             background: #F57C00; /* Darker orange */
         }
 
-        .diffButton.active[data-difficulty="hard"]:active {
+        .diff-button.active[data-difficulty="hard"]:active {
             background: #D32F2F; /* Darker red */
         }
 
         /* Grid Toggle Group - matches difficultyGroup design */
-        .gridToggleGroup {
+        .grid-toggle-group {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             padding-right: 0.375rem; /* Space for focus outline */
         }
 
-        .gridLabel {
+        .grid-label {
             font-size: 0.875rem;
             color: #666;
             font-weight: 500;
             margin-right: 0.5rem;
         }
 
-        .gridToggle {
+        .grid-toggle {
             position: relative;
             display: inline-block;
             width: 40px;
@@ -528,14 +358,14 @@
             cursor: pointer;
         }
 
-        .gridToggle input {
+        .grid-toggle input {
             opacity: 0;
             width: 0;
             height: 0;
             position: absolute;
         }
 
-        .gridToggleSlider {
+        .grid-toggle-slider {
             position: absolute;
             top: 0;
             left: 0;
@@ -546,7 +376,7 @@
             transition: background-color 0.3s, box-shadow 0.2s;
         }
 
-        .gridToggleSlider:before {
+        .grid-toggle-slider:before {
             position: absolute;
             content: "";
             height: 16px;
@@ -559,38 +389,38 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        .gridToggle input:checked + .gridToggleSlider {
+        .grid-toggle input:checked + .grid-toggle-slider {
             background-color: #4CAF50;
         }
 
-        .gridToggle input:checked + .gridToggleSlider:before {
+        .grid-toggle input:checked + .grid-toggle-slider:before {
             transform: translateX(18px);
         }
 
-        .gridToggle input:focus-visible + .gridToggleSlider {
+        .grid-toggle input:focus-visible + .grid-toggle-slider {
             outline: none;
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.25);
         }
 
-        .gridToggle:hover .gridToggleSlider:before {
+        .grid-toggle:hover .grid-toggle-slider:before {
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
 
 
         #board.no-grid {
             background-image: none;
-            background: #f4d03f;
+            background: var(--board-surface);
         }
 
-        #board.no-grid .gridLine {
+        #board.no-grid .grid-line {
             display: none;
         }
 
-        #board:not(.no-grid) .gridLine {
+        #board:not(.no-grid) .grid-line {
             display: block;
         }
 
-        .gridLine {
+        .grid-line {
             position: absolute;
             background: #d4a76a;
             pointer-events: none;
@@ -598,12 +428,12 @@
             opacity: 0.5;
         }
 
-        .gridLine.horizontal {
+        .grid-line.horizontal {
             width: 100%;
             height: 1px;
         }
 
-        .gridLine.vertical {
+        .grid-line.vertical {
             width: 1px;
             height: 100%;
         }
@@ -614,7 +444,7 @@
             padding: 0.25rem; /* Prevent focus outline clipping */
         }
 
-        .controlButton {
+        .control-button {
             flex: 1;
             background: var(--card-bg);
             border: none;
@@ -631,44 +461,31 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .controlButton:active {
+        .control-button:active {
             background: #f0f0f0;
             transform: scale(0.95);
         }
 
-        .controlButton:disabled {
+        .control-button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .controlButton:focus-visible {
+        .control-button:focus-visible {
             outline: 2px solid var(--text-primary);
             outline-offset: 2px;
         }
 
-        #sessionInfo {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: clamp(0.75rem, 3vw, 0.875rem);
-            padding-top: 0.5rem;
-            border-top: 1px solid #eee;
-        }
-
-        .controlButton.pass {
+        .control-button.pass {
             background: linear-gradient(135deg, #ffd89b 0%, #ffa751 100%);
             border: none;
             color: white;
             font-weight: bold;
         }
 
-        .controlButton.resign {
-            background: linear-gradient(135deg, #ff9b9b 0%, #ff5151 100%);
-            border: none;
-            color: white;
-            font-weight: bold;
-        }
+        /* Removed unused .control-button.resign styles */
 
-        #endGameModal {
+        #end-game-modal {
             display: none;
             position: fixed;
             inset: 0;
@@ -681,11 +498,11 @@
             padding: clamp(1rem, 4vw, 2rem);
         }
 
-        #endGameModal.active {
+        #end-game-modal.active {
             display: flex;
         }
 
-        .modalContent {
+        .modal-content {
             background: var(--card-bg);
             border-radius: 1.25rem;
             padding: clamp(1.5rem, 5vw, 2rem);
@@ -697,27 +514,27 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
 
-        .modalTitle {
+        .modal-title {
             font-size: clamp(1.25rem, 5vw, 1.75rem);
             color: var(--text-primary);
             margin-bottom: 1.25rem;
             font-weight: bold;
         }
 
-        .modalScore {
+        .modal-score {
             font-size: clamp(1rem, 4vw, 1.375rem);
             color: var(--text-secondary);
             margin-bottom: 1rem;
         }
 
-        .modalMessage {
+        .modal-message {
             font-size: clamp(0.875rem, 3.5vw, 1.125rem);
             color: var(--text-secondary);
             margin-bottom: 1.25rem;
             line-height: 1.4;
         }
 
-        .scoreDetails {
+        .score-details {
             background: #f8f8f8;
             border-radius: 15px;
             padding: 15px;
@@ -725,7 +542,7 @@
             text-align: left;
         }
 
-        .scoreDetail {
+        .score-detail {
             display: flex;
             justify-content: space-between;
             padding: 8px 0;
@@ -733,7 +550,7 @@
             font-size: 16px;
         }
 
-        .scoreDetail:last-child {
+        .score-detail:last-child {
             border-bottom: none;
             font-weight: bold;
             margin-top: 10px;
@@ -741,25 +558,25 @@
             border-top: 2px solid #ccc;
         }
 
-        .scoreDetail.black {
+        .score-detail.black {
             color: #000;
         }
 
-        .scoreDetail.white {
+        .score-detail.white {
             color: #666;
         }
 
-        .detailLabel {
+        .detail-label {
             display: flex;
             align-items: center;
             gap: 5px;
         }
 
-        .detailValue {
+        .detail-value {
             font-weight: 500;
         }
 
-        .expandButton {
+        .expand-button {
             background: #f0f0f0;
             border: none;
             border-radius: 10px;
@@ -775,21 +592,21 @@
             width: 100%;
         }
 
-        .expandButton:active {
+        .expand-button:active {
             background: #e0e0e0;
         }
 
-        .expandButton::after {
+        .expand-button::after {
             content: '▼';
             font-size: 12px;
             transition: transform 0.3s;
         }
 
-        .expandButton.expanded::after {
+        .expand-button.expanded::after {
             transform: rotate(180deg);
         }
 
-        .explanationSection {
+        .explanation-section {
             display: none;
             background: #fffbf0;
             border-radius: 15px;
@@ -799,11 +616,11 @@
             border: 2px solid #f0e0c0;
         }
 
-        .explanationSection.show {
+        .explanation-section.show {
             display: block;
         }
 
-        .explanationTitle {
+        .explanation-title {
             font-size: 20px;
             color: #4a4a4a;
             margin-bottom: 15px;
@@ -811,52 +628,52 @@
             text-align: center;
         }
 
-        .explanationContent {
+        .explanation-content {
             font-size: 16px;
             color: #666;
             line-height: 1.8;
         }
 
-        .explanationContent p {
+        .explanation-content p {
             margin-bottom: 12px;
         }
 
-        .explanationContent strong {
+        .explanation-content strong {
             color: #4a4a4a;
             font-weight: 600;
         }
 
-        .territoryOverlay {
+        .territory-overlay {
             position: absolute;
             pointer-events: none;
             border-radius: 50%;
             opacity: 0.4;
             z-index: 2;
-            animation: fadeIn 0.5s ease-in;
+            animation: fade-in 0.5s ease-in;
         }
 
-        .territoryOverlay.black-territory {
+        .territory-overlay.black-territory {
             background: radial-gradient(circle, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 100%);
             box-shadow: 0 0 3px rgba(0,0,0,0.3);
         }
 
-        .territoryOverlay.white-territory {
+        .territory-overlay.white-territory {
             background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
             border: 1px solid rgba(200,200,200,0.8);
             box-shadow: 0 0 3px rgba(255,255,255,0.5);
         }
 
-        @keyframes fadeIn {
+        @keyframes fade-in {
             from { opacity: 0; transform: scale(0.8); }
             to { opacity: 0.4; transform: scale(1); }
         }
 
-        .modalButtons {
+        .modal-buttons {
             display: flex;
             gap: 15px;
         }
 
-        .modalButton {
+        .modal-button {
             flex: 1;
             padding: 12px 20px;
             border-radius: 15px;
@@ -866,20 +683,21 @@
             transition: transform 0.2s;
         }
 
-        .modalButton.primary {
+        .modal-button.primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             font-weight: bold;
         }
 
-        .modalButton.secondary {
+        .modal-button.secondary {
             background: #f0f0f0;
             color: #666;
         }
 
-        .modalButton:active {
+        .modal-button:active {
             transform: scale(0.95);
         }
+
 
         /* Small screens - better single column layout */
         @media (max-width: 400px) {
@@ -887,59 +705,55 @@
                 gap: 0.5rem;
             }
 
-            .difficultyGroup {
+            .difficulty-group {
                 gap: 0.375rem;
                 padding-right: 0.25rem;
             }
 
-            .diffLabel {
+            .diff-label {
                 font-size: 0.75rem;
                 margin-right: 0.375rem;
             }
 
-            .diffButtonGroup {
+            .diff-button-group {
                 padding: 0.0625rem;
             }
 
-            .diffButton {
+            .diff-button {
                 width: 1.75rem;
                 height: 1.75rem;
                 font-size: 0.6875rem;
             }
 
-            .gridToggleGroup {
+            .grid-toggle-group {
                 gap: 0.375rem;
                 padding-right: 0.25rem;
             }
 
-            .gridLabel {
+            .grid-label {
                 font-size: 0.75rem;
                 margin-right: 0.375rem;
             }
 
-            .gridToggle {
+            .grid-toggle {
                 width: 36px;
                 height: 20px;
             }
 
-            .gridToggleSlider {
+            .grid-toggle-slider {
                 border-radius: 20px;
             }
 
-            .gridToggleSlider:before {
+            .grid-toggle-slider:before {
                 height: 14px;
                 width: 14px;
             }
 
-            .gridToggle input:checked + .gridToggleSlider:before {
+            .grid-toggle input:checked + .grid-toggle-slider:before {
                 transform: translateX(16px);
             }
 
-            .iconButton {
-                width: 2rem;
-                height: 2rem;
-                font-size: 1rem;
-            }
+            /* Removed unused .icon-button styles */
         }
 
         /* Very small screens - compact layout */
@@ -948,7 +762,7 @@
                 --touch-target: max(2.5rem, 40px);
             }
 
-            #gameContainer {
+            #game-container {
                 padding: 0.5rem;
                 gap: 0.5rem;
             }
@@ -957,33 +771,33 @@
                 gap: 0.25rem;
             }
 
-            .gameTitle {
+            .game-title {
                 font-size: 1.25rem;
             }
 
-            .difficultyGroup {
+            .difficulty-group {
                 gap: 0.25rem;
                 padding-right: 0.1875rem;
             }
 
-            .diffLabel {
+            .diff-label {
                 margin-right: 0.25rem;
             }
 
-            .gridToggleGroup {
+            .grid-toggle-group {
                 gap: 0.25rem;
                 padding-right: 0.1875rem;
             }
 
-            .gridLabel {
+            .grid-label {
                 margin-right: 0.25rem;
             }
 
-            .diffButtonGroup {
+            .diff-button-group {
                 padding: 0.0625rem;
             }
 
-            .diffButton {
+            .diff-button {
                 width: 1.625rem;
                 height: 1.625rem;
                 font-size: 0.625rem;
@@ -992,18 +806,9 @@
 
         /* Large screens - optimize for desktop */
         @media (min-width: 768px) {
-            body {
-                position: static;
-                overflow: auto;
-                background-attachment: fixed;
-            }
 
-            #gameContainer {
-                height: auto;
-                min-height: 100vh;
+            #game-container {
                 max-width: 500px;
-                padding: 2rem;
-                grid-template-rows: auto auto 1fr auto;
             }
 
             .game-board-area {
@@ -1011,9 +816,7 @@
                 align-items: center;
             }
 
-            #boardContainer {
-                width: min(400px, 60vh);
-            }
+            /* #board-container responsive styles now in shared-styles.css */
         }
 
         /* Accessibility - respect reduced motion */
@@ -1034,17 +837,28 @@
             }
 
             .stone.black {
-                border: 2px solid #000000;
+                border: 2px solid var(--stone-black-border-hc);
             }
 
             .stone.white {
-                border: 2px solid #333333;
+                border: 2px solid var(--stone-white-border-hc);
             }
         }
 
+        @media (max-height: 540px) {
+            :root {
+                --game-content-width: 241px;
+            }
+
+            #board-container {
+                min-width: 241px;
+                min-height: 241px;
+            }
+        }           
+
         /* Compact mode for small height screens */
         @media (max-height: 650px) {
-            #gameContainer {
+            #game-container {
                 gap: 0.25rem;
             }
 
@@ -1052,187 +866,204 @@
                 gap: 0.25rem;
             }
 
-            #messageArea {
+            #message-area {
                 min-height: 2.5rem;
                 padding: 0.5rem;
-            }
+            }        
 
-            #sessionInfo {
-                font-size: 0.75rem;
-            }
-
-            .controlButton {
+            .control-button {
                 padding: 0.5rem 1rem;
                 font-size: 0.875rem;
                 min-height: 2.5rem;
             }
 
-            #gameInfo {
+            #game-info {
                 gap: 1rem;
                 padding: 0.25rem;
             }
 
-            .captureItem {
+            .capture-item {
+                font-size: 0.75rem;
+            }
+
+            #session-info {
                 font-size: 0.75rem;
             }
         }
+        
+        @media (max-height: 661px) {
+            .header-row {
+                gap: 0.125rem;
+            }
+
+            .grid-toggle-group {
+                gap: 0.125rem;
+                flex-direction: column;
+            }  
+
+            .difficulty-group {
+                gap: 0.125rem;
+                flex-direction: column;
+                padding-right: 0;
+            }    
+        }         
     </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <div id="welcomeScreen">
-            <h1 class="welcomeTitle">歡迎來到圍棋世界</h1>
-            <p class="welcomeMessage">您好！我是棋友小克！<br>讓我們一起享受下棋的樂趣吧！</p>
-            <button class="startButton" onclick="startGame()">開始下棋</button>
+    <div id="game-container">
+        <div id="welcome-screen">
+            <h1 class="welcome-title">歡迎來到圍棋世界</h1>
+            <p class="welcome-message">您好！我是棋友小克！<br>讓我們一起享受下棋的樂趣吧！</p>
+            <button class="start-button" onclick="startGame()">開始下棋</button>
         </div>
 
-        <div id="gameScreen">
+        <div id="game-screen">
             <div class="game-header">
                 <div class="header-row">
-                    <div class="gridToggleGroup">
-                        <span class="gridLabel">格線</span>
-                        <label class="gridToggle">
+                    <div class="grid-toggle-group">
+                        <span class="grid-label">格線</span>
+                        <label class="grid-toggle">
                             <input type="checkbox" checked onchange="toggleGrid(this.checked)"
                                    title="格線開關" aria-label="格線開關">
-                            <span class="gridToggleSlider"></span>
+                            <span class="grid-toggle-slider"></span>
                         </label>
                     </div>
 
-                    <h1 class="gameTitle">圍棋</h1>
+                    <h1 class="game-title">圍棋</h1>
 
-                    <div class="difficultyGroup">
-                        <span class="diffLabel">難度</span>
-                        <div class="diffButtonGroup" role="group" aria-label="難度選擇">
-                            <button class="diffButton active" data-difficulty="easy" onclick="changeDifficulty('easy')"
+                    <div class="difficulty-group">
+                        <span class="diff-label">難度</span>
+                        <div class="diff-button-group" role="group" aria-label="難度選擇">
+                            <button class="diff-button active" data-difficulty="easy" onclick="changeDifficulty('easy')"
                                     title="簡單模式" aria-label="簡單難度">易</button>
-                            <button class="diffButton" data-difficulty="medium" onclick="changeDifficulty('medium')"
+                            <button class="diff-button" data-difficulty="medium" onclick="changeDifficulty('medium')"
                                     title="中等難度" aria-label="中等難度">中</button>
-                            <button class="diffButton" data-difficulty="hard" onclick="changeDifficulty('hard')"
+                            <button class="diff-button" data-difficulty="hard" onclick="changeDifficulty('hard')"
                                     title="困難模式" aria-label="困難難度">難</button>
                         </div>
                     </div>
                 </div>
 
-                <div id="messageArea">
-                    <div id="aiMessage">您執黑子，請先下！觸碰任何交叉點落子。</div>
+                <div id="message-area">
+                    <div id="ai-message">您執黑子，請先下！觸碰任何交叉點落子。</div>
                 </div>
             </div>
 
             <div class="game-board-area">
-                <div id="boardContainer">
+                <div id="board-container">
                     <div id="board"></div>
                 </div>
             </div>
 
             <div class="game-footer">
-                <div id="gameInfo">
-                    <div class="captureItem">
+                <div id="game-info">
+                    <div class="capture-item">
                         <span>您：</span>
-                        <span id="blackCaptures">0</span>
-                        <span class="captureStone black"></span>
+                        <span id="black-captures">0</span>
+                        <span class="capture-stone black"></span>
                     </div>
-                    <div class="captureItem">
+                    <div class="capture-item">
                         <span>小克：</span>
-                        <span id="whiteCaptures">0</span>
-                        <span class="captureStone white"></span>
+                        <span id="white-captures">0</span>
+                        <span class="capture-stone white"></span>
                     </div>
                 </div>
 
                 <div id="controls">
-                    <button class="controlButton" onclick="undoMove()">悔棋</button>
-                    <button class="controlButton pass" onclick="playerPass()">虛手</button>
-                    <button class="controlButton resign" id="resignButton" style="display:none;" onclick="confirmResign()">認輸</button>
+                    <button class="control-button" onclick="undoMove()">悔棋</button>
+                    <button class="control-button pass" onclick="playerPass()">虛手</button>
+                    <!-- Removed non-functional resign button -->
                 </div>
 
-                <div id="sessionInfo">
-                    第 <span id="sessionGames">0</span> 局 • 今日已玩 <span id="totalGames">0</span> 局
+                <div id="session-info">
+                    第 <span id="session-games">0</span> 局 • 今日已玩 <span id="total-games">0</span> 局
                 </div>
             </div>
         </div>
 
-        <div id="endGameModal">
-            <div class="modalContent">
-                <h2 class="modalTitle">對局結束</h2>
-                <div class="modalScore" id="finalScore"></div>
+        <div id="end-game-modal">
+            <div class="modal-content">
+                <h2 class="modal-title">對局結束</h2>
+                <div class="modal-score" id="final-score"></div>
                 <p style="font-size: 14px; color: #999; margin: -10px 0 15px 0;">（棋盤上已標示領地）</p>
-                
-                <button class="expandButton" onclick="toggleExplanation()">
+
+                <button class="expand-button" onclick="toggleExplanation()">
                     瞭解計分方式
                 </button>
-                
-                <div class="explanationSection" id="explanationSection">
-                    <div class="explanationTitle">📚 圍棋計分說明</div>
-                    <div class="explanationContent">
+
+                <div class="explanation-section" id="explanation-section">
+                    <div class="explanation-title">📚 圍棋計分說明</div>
+                    <div class="explanation-content">
                         <p><strong>圍棋的目標：</strong><br>
                         佔領更多的地盤（空地）！不只是吃子喔。</p>
-                        
+
                         <p><strong>如何計算分數：</strong><br>
                         🏠 <strong>領地</strong>：您圍住的空地，每格算1分<br>
-                        <span class="scoreStone black"></span><strong>活棋</strong>：棋盤上您的棋子，每顆算1分<br>
+                        <span class="score-stone black"></span><strong>活棋</strong>：棋盤上您的棋子，每顆算1分<br>
                         🎯 <strong>提子</strong>：吃掉對方的棋子，每顆算1分</p>
-                        
+
                         <p><strong>貼目是什麼？</strong><br>
                         因為黑棋先下有優勢，所以白棋會得到6.5分補償，讓遊戲更公平。</p>
-                        
+
                         <p><strong>誰贏了？</strong><br>
                         總分高的一方獲勝！就這麼簡單。</p>
                     </div>
                 </div>
-                
-                <div class="scoreDetails">
-                    <div class="scoreDetail black">
-                        <span class="detailLabel"><span class="scoreStone black"></span>黑子計分</span>
-                        <span class="detailValue"></span>
+
+                <div class="score-details">
+                    <div class="score-detail black">
+                        <span class="detail-label"><span class="score-stone black"></span>黑子計分</span>
+                        <span class="detail-value"></span>
                     </div>
-                    <div class="scoreDetail black" id="blackTerritory">
-                        <span class="detailLabel">　　領地</span>
-                        <span class="detailValue">0 格</span>
+                    <div class="score-detail black" id="black-territory">
+                        <span class="detail-label">　　領地</span>
+                        <span class="detail-value">0 格</span>
                     </div>
-                    <div class="scoreDetail black" id="blackStones">
-                        <span class="detailLabel">　　活棋</span>
-                        <span class="detailValue">0 子</span>
+                    <div class="score-detail black" id="black-stones">
+                        <span class="detail-label">　　活棋</span>
+                        <span class="detail-value">0 子</span>
                     </div>
-                    <div class="scoreDetail black" id="blackCaptured">
-                        <span class="detailLabel">　　提子</span>
-                        <span class="detailValue">0 個</span>
+                    <div class="score-detail black" id="black-captured">
+                        <span class="detail-label">　　提子</span>
+                        <span class="detail-value">0 個</span>
                     </div>
-                    <div class="scoreDetail black">
-                        <span class="detailLabel"><strong>黑子總分</strong></span>
-                        <span class="detailValue" id="blackTotal"><strong>0</strong></span>
+                    <div class="score-detail black">
+                        <span class="detail-label"><strong>黑子總分</strong></span>
+                        <span class="detail-value" id="black-total"><strong>0</strong></span>
                     </div>
-                    
+
                     <div style="margin: 15px 0;"></div>
-                    
-                    <div class="scoreDetail white">
-                        <span class="detailLabel"><span class="scoreStone white"></span>白子計分</span>
-                        <span class="detailValue"></span>
+
+                    <div class="score-detail white">
+                        <span class="detail-label"><span class="score-stone white"></span>白子計分</span>
+                        <span class="detail-value"></span>
                     </div>
-                    <div class="scoreDetail white" id="whiteTerritory">
-                        <span class="detailLabel">　　領地</span>
-                        <span class="detailValue">0 格</span>
+                    <div class="score-detail white" id="white-territory">
+                        <span class="detail-label">　　領地</span>
+                        <span class="detail-value">0 格</span>
                     </div>
-                    <div class="scoreDetail white" id="whiteStones">
-                        <span class="detailLabel">　　活棋</span>
-                        <span class="detailValue">0 子</span>
+                    <div class="score-detail white" id="white-stones">
+                        <span class="detail-label">　　活棋</span>
+                        <span class="detail-value">0 子</span>
                     </div>
-                    <div class="scoreDetail white" id="whiteCaptured">
-                        <span class="detailLabel">　　提子</span>
-                        <span class="detailValue">0 個</span>
+                    <div class="score-detail white" id="white-captured">
+                        <span class="detail-label">　　提子</span>
+                        <span class="detail-value">0 個</span>
                     </div>
-                    <div class="scoreDetail white" id="whiteKomi">
-                        <span class="detailLabel">　　貼目</span>
-                        <span class="detailValue">6.5 分</span>
+                    <div class="score-detail white" id="white-komi">
+                        <span class="detail-label">　　貼目</span>
+                        <span class="detail-value">6.5 分</span>
                     </div>
-                    <div class="scoreDetail white">
-                        <span class="detailLabel"><strong>白子總分</strong></span>
-                        <span class="detailValue" id="whiteTotal"><strong>0</strong></span>
+                    <div class="score-detail white">
+                        <span class="detail-label"><strong>白子總分</strong></span>
+                        <span class="detail-value" id="white-total"><strong>0</strong></span>
                     </div>
                 </div>
-                
-                <div class="modalMessage" id="endMessage"></div>
-                <div class="modalButtons">
-                    <button class="modalButton primary" onclick="newGame()">再來一局</button>
-                    <button class="modalButton secondary" onclick="takeBreak()">休息一下</button>
+
+                <div class="modal-message" id="end-message"></div>
+                <div class="modal-buttons">
+                    <button class="modal-button primary" onclick="newGame()">再來一局</button>
+                    <button class="modal-button secondary" onclick="takeBreak()">休息一下</button>
                 </div>
             </div>
         </div>
@@ -1264,8 +1095,8 @@
 
         // Update session information display
         function updateSessionInfo() {
-            document.getElementById('sessionGames').textContent = sessionGames;
-            document.getElementById('totalGames').textContent = totalGamesToday;
+            document.getElementById('session-games').textContent = sessionGames;
+            document.getElementById('total-games').textContent = totalGamesToday;
         }
 
         const aiMessages = {
@@ -1370,13 +1201,13 @@
             for (let i = 0; i < BOARD_SIZE; i++) {
                 // Horizontal lines
                 const hLine = document.createElement('div');
-                hLine.className = 'gridLine horizontal';
+                hLine.className = 'grid-line horizontal';
                 hLine.style.top = `${(i / 12) * 100}%`;
                 boardElement.appendChild(hLine);
-                
+
                 // Vertical lines
                 const vLine = document.createElement('div');
-                vLine.className = 'gridLine vertical';
+                vLine.className = 'grid-line vertical';
                 vLine.style.left = `${(i / 12) * 100}%`;
                 boardElement.appendChild(vLine);
             }
@@ -1385,7 +1216,7 @@
             const starPoints = [
                 [3, 3], [3, 9], [6, 6], [9, 3], [9, 9]
             ];
-            
+
             starPoints.forEach(([row, col]) => {
                 const star = document.createElement('div');
                 star.className = 'star-point';
@@ -1403,11 +1234,11 @@
                     intersection.style.top = `${(i / 12) * 100 - 3.845}%`;
                     intersection.dataset.row = i;
                     intersection.dataset.col = j;
-                    
+
                     intersection.addEventListener('click', handleIntersectionClick);
                     intersection.addEventListener('touchstart', handleTouch, {passive: true});
                     intersection.addEventListener('touchend', handleTouchEnd, {passive: false});
-                    
+
                     boardElement.appendChild(intersection);
                 }
             }
@@ -1422,7 +1253,7 @@
             }
 
             const boardElement = document.getElementById('board');
-            const checkbox = document.querySelector('.gridToggle input');
+            const checkbox = document.querySelector('.grid-toggle input');
 
             // Update checkbox state (only if it's different to avoid infinite loop)
             if (checkbox && checkbox.checked !== gridEnabled) {
@@ -1438,12 +1269,12 @@
         }
 
         function updateBoardStyle() {
-            const boardContainer = document.getElementById('boardContainer');
+            const boardContainer = document.getElementById('board-container');
             if (!boardContainer) return; // Safety check
-            
+
             // Remove all mode classes
             boardContainer.classList.remove('easy-mode', 'medium-mode', 'hard-mode');
-            
+
             // Add the appropriate mode class
             if (difficulty === 'easy') {
                 boardContainer.classList.add('easy-mode');
@@ -1456,19 +1287,19 @@
 
         function changeDifficulty(level) {
             difficulty = level;
-            
+
             // Simple class toggle
-            document.querySelectorAll('.diffButton').forEach((btn, index) => {
+            document.querySelectorAll('.diff-button').forEach((btn, index) => {
                 btn.classList.toggle('active',
                     (level === 'easy' && index === 0) ||
                     (level === 'medium' && index === 1) ||
                     (level === 'hard' && index === 2)
                 );
             });
-            
+
             // Update board style
             updateBoardStyle();
-            
+
             // Show personality message with extreme descriptions
             let personalityMessage = "";
             if (level === 'easy') {
@@ -1478,9 +1309,9 @@
             } else if (level === 'hard') {
                 personalityMessage = "戰鬥狂模式：我會瘋狂進攻！每一手都在找機會殺您的棋！";
             }
-            
+
             showMessage(personalityMessage);
-            
+
             // Turn off auto-adjustment when manually set
             difficultyAdjustment = false;
         }
@@ -1489,7 +1320,7 @@
             difficulty = level;
 
             // Update button states
-            document.querySelectorAll('.diffButton').forEach(btn => {
+            document.querySelectorAll('.diff-button').forEach(btn => {
                 btn.classList.remove('active');
                 if ((level === 'easy' && btn.textContent === '簡單') ||
                     (level === 'medium' && btn.textContent === '中等') ||
@@ -1497,7 +1328,7 @@
                     btn.classList.add('active');
                 }
             });
-            
+
             // Show personality-based message
             let personalityMessage = "";
             if (level === 'easy') {
@@ -1507,21 +1338,21 @@
             } else {
                 personalityMessage = "我會積極進攻，每個地方都要戰鬥！";
             }
-            
+
             showMessage(personalityMessage);
-            
+
             // Turn off auto-adjustment when manually set
             difficultyAdjustment = false;
         }
 
         function adjustDifficultyAutomatically() {
             if (!difficultyAdjustment) return;
-            
+
             // Auto-adjust based on win/loss ratio
             const totalGames = winCount + lossCount;
             if (totalGames >= 3) {
                 const winRate = winCount / totalGames;
-                
+
                 if (winRate > 0.7 && difficulty !== 'hard') {
                     // Player winning too much, increase difficulty
                     if (difficulty === 'easy') {
@@ -1550,7 +1381,7 @@
             difficulty = level;
 
             // Update button states
-            document.querySelectorAll('.diffButton').forEach(btn => {
+            document.querySelectorAll('.diff-button').forEach(btn => {
                 btn.classList.remove('active');
                 if ((level === 'easy' && btn.textContent === '簡單') ||
                     (level === 'medium' && btn.textContent === '中等') ||
@@ -1566,7 +1397,7 @@
             const intersection = e.currentTarget;
             const row = parseInt(intersection.dataset.row);
             const col = parseInt(intersection.dataset.col);
-            
+
             if (currentPlayer === BLACK && board[row][col] === EMPTY) {
                 touchedIntersection = intersection;
                 showPreview(intersection, row, col);
@@ -1603,7 +1434,7 @@
             const intersection = e.currentTarget;
             const row = parseInt(intersection.dataset.row);
             const col = parseInt(intersection.dataset.col);
-            
+
             if (currentPlayer === BLACK) {
                 placeStone(row, col);
             }
@@ -1612,7 +1443,7 @@
         function placeStone(row, col) {
             if (!gameStarted || currentPlayer !== BLACK) return;
             if (board[row][col] !== EMPTY) return;
-            
+
             // Check ko rule
             if (koPosition && koPosition.row === row && koPosition.col === col) {
                 showMessage("那裡不能下喔，試試其他地方！");
@@ -1621,10 +1452,10 @@
 
             // Try placing the stone
             board[row][col] = BLACK;
-            
+
             // Check for captures
             const captures = checkCaptures(row, col, WHITE);
-            
+
             // Check for suicide
             if (!hasLiberties(row, col, BLACK) && captures.length === 0) {
                 board[row][col] = EMPTY;
@@ -1634,21 +1465,21 @@
 
             // Valid move
             passCount = 0;
-            
+
             // Handle captures
             if (captures.length > 0) {
                 captures.forEach(([r, c]) => {
                     board[r][c] = EMPTY;
                     blackCaptures++;
                 });
-                
+
                 // Check for ko
                 if (captures.length === 1 && !hasLiberties(row, col, BLACK)) {
                     koPosition = { row: captures[0][0], col: captures[0][1] };
                 } else {
                     koPosition = null;
                 }
-                
+
                 updateCaptures();
                 showMessage(getRandomMessage('capture'));
             } else {
@@ -1667,7 +1498,7 @@
             moveHistory.push({ row, col, player: BLACK });
             renderBoard();
             currentPlayer = WHITE;
-            
+
             setTimeout(makeAIMove, 1000);
         }
 
@@ -1678,44 +1509,44 @@
 
         function checkGroupLiberties(row, col, color, visited) {
             if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) return 0;
-            
+
             const key = `${row},${col}`;
             if (visited.has(key)) return 0;
-            
+
             if (board[row][col] === EMPTY) return 1;
             if (board[row][col] !== color) return 0;
-            
+
             visited.add(key);
-            
+
             let liberties = 0;
             const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
-            
+
             for (const [dr, dc] of neighbors) {
                 liberties += checkGroupLiberties(row + dr, col + dc, color, visited);
             }
-            
+
             return liberties;
         }
 
         function checkCaptures(row, col, opponentColor) {
             const captures = [];
             const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
-            
+
             for (const [dr, dc] of neighbors) {
                 const newRow = row + dr;
                 const newCol = col + dc;
-                
-                if (newRow >= 0 && newRow < BOARD_SIZE && 
+
+                if (newRow >= 0 && newRow < BOARD_SIZE &&
                     newCol >= 0 && newCol < BOARD_SIZE &&
                     board[newRow][newCol] === opponentColor) {
-                    
+
                     if (!hasLiberties(newRow, newCol, opponentColor)) {
                         const group = getGroup(newRow, newCol, opponentColor);
                         captures.push(...group);
                     }
                 }
             }
-            
+
             return captures;
         }
 
@@ -1723,49 +1554,49 @@
             const group = [];
             const visited = new Set();
             const stack = [[row, col]];
-            
+
             while (stack.length > 0) {
                 const [r, c] = stack.pop();
                 const key = `${r},${c}`;
-                
+
                 if (visited.has(key)) continue;
                 visited.add(key);
-                
+
                 if (board[r][c] === color) {
                     group.push([r, c]);
-                    
+
                     const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
                     for (const [dr, dc] of neighbors) {
                         const newRow = r + dr;
                         const newCol = c + dc;
-                        if (newRow >= 0 && newRow < BOARD_SIZE && 
+                        if (newRow >= 0 && newRow < BOARD_SIZE &&
                             newCol >= 0 && newCol < BOARD_SIZE) {
                             stack.push([newRow, newCol]);
                         }
                     }
                 }
             }
-            
+
             return group;
         }
 
         function evaluateMove(row, col, color) {
             // Advanced move evaluation for better AI
             let score = 0;
-            
+
             // Check captures
             const captures = checkCaptures(row, col, color === WHITE ? BLACK : WHITE);
             score += captures.length * 50;
-            
+
             // Count liberties after the move
             board[row][col] = color;
             const liberties = countGroupLiberties(row, col, color);
             board[row][col] = EMPTY;
             score += liberties * 5;
-            
+
             // Distance from edges (center is often strategic in middle game)
             const distFromEdge = Math.min(row, col, BOARD_SIZE - 1 - row, BOARD_SIZE - 1 - col);
-            
+
             // Opening strategy - corners and sides
             if (moveHistory.length < 15) {
                 if ((row <= 3 || row >= 9) && (col <= 3 || col >= 9)) {
@@ -1778,12 +1609,12 @@
                 // Middle game - balance center and sides
                 score += distFromEdge * 2;
             }
-            
+
             // Connection to friendly stones
             const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
             let friendlyNeighbors = 0;
             let enemyNeighbors = 0;
-            
+
             for (const [dr, dc] of neighbors) {
                 const nr = row + dr;
                 const nc = col + dc;
@@ -1792,9 +1623,9 @@
                     else if (board[nr][nc] !== EMPTY) enemyNeighbors++;
                 }
             }
-            
+
             score += friendlyNeighbors * 8;
-            
+
             // Check if move threatens enemy groups
             for (const [dr, dc] of neighbors) {
                 const nr = row + dr;
@@ -1805,41 +1636,41 @@
                         board[row][col] = color;
                         const enemyLiberties = countGroupLiberties(nr, nc, board[nr][nc]);
                         board[row][col] = EMPTY;
-                        
+
                         if (enemyLiberties === 1) score += 40; // Atari!
                         else if (enemyLiberties === 2) score += 20; // Threatening
                     }
                 }
             }
-            
+
             return score;
         }
 
         function countGroupLiberties(row, col, color) {
             const visited = new Set();
             const liberties = new Set();
-            
+
             function explore(r, c) {
                 if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) return;
-                
+
                 const key = `${r},${c}`;
                 if (visited.has(key)) return;
-                
+
                 if (board[r][c] === EMPTY) {
                     liberties.add(key);
                     return;
                 }
-                
+
                 if (board[r][c] !== color) return;
-                
+
                 visited.add(key);
-                
+
                 const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
                 for (const [dr, dc] of neighbors) {
                     explore(r + dr, c + dc);
                 }
             }
-            
+
             explore(row, col);
             return liberties.size;
         }
@@ -1848,7 +1679,7 @@
             if (!gameStarted || currentPlayer !== WHITE) return;
 
             const validMoves = [];
-            
+
             for (let i = 0; i < BOARD_SIZE; i++) {
                 for (let j = 0; j < BOARD_SIZE; j++) {
                     if (board[i][j] === EMPTY) {
@@ -1857,11 +1688,11 @@
                         const captures = checkCaptures(i, j, BLACK);
                         const wouldBeSuicide = !hasLiberties(i, j, WHITE) && captures.length === 0;
                         const isKo = koPosition && koPosition.row === i && koPosition.col === j;
-                        
+
                         if (!wouldBeSuicide && !isKo) {
                             // Calculate score based on difficulty
                             let score = evaluateMove(i, j, WHITE);
-                            
+
                             // Difficulty-based adjustments
                             if (difficulty === 'easy') {
                                 // Easy mode: Peaceful, avoid confrontation
@@ -1878,29 +1709,29 @@
                                         }
                                     }
                                 }
-                                
+
                                 if (hasEnemyNeighbor) {
                                     score -= 30; // Avoid playing near opponent
                                 }
-                                
+
                                 // Strongly prefer corners and peaceful areas
                                 if ((i <= 2 || i >= 10) && (j <= 2 || j >= 10)) {
                                     score += 40;
                                 }
-                                
+
                                 // Add more randomness
                                 score += Math.random() * 20;
-                                
+
                             } else if (difficulty === 'medium') {
                                 // Medium mode: Balanced play
                                 // Standard evaluation with some randomness
                                 score += Math.random() * 10;
-                                
+
                             } else if (difficulty === 'hard') {
                                 // Hard mode: Aggressive, seeks fights
                                 // Look for cutting and attacking moves
                                 const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
-                                
+
                                 // Bonus for playing near opponent stones
                                 for (const [dr, dc] of neighbors) {
                                     const nr = i + dr;
@@ -1908,19 +1739,19 @@
                                     if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
                                         if (board[nr][nc] === BLACK) {
                                             score += 25; // Seek contact
-                                            
+
                                             // Check if we can reduce their liberties
                                             board[i][j] = WHITE;
                                             const enemyLibs = countGroupLiberties(nr, nc, BLACK);
                                             board[i][j] = EMPTY;
-                                            
+
                                             if (enemyLibs <= 2) {
                                                 score += 50; // Attack weak groups
                                             }
                                         }
                                     }
                                 }
-                                
+
                                 // Look for cutting points
                                 let blackDiagonals = 0;
                                 const diagonals = [[1,1], [1,-1], [-1,1], [-1,-1]];
@@ -1934,14 +1765,14 @@
                                 if (blackDiagonals >= 2) {
                                     score += 30; // Potential cutting point
                                 }
-                                
+
                                 // Less randomness for more consistent aggression
                                 score += Math.random() * 5;
                             }
-                            
+
                             validMoves.push({ row: i, col: j, score, captures: captures.length });
                         }
-                        
+
                         board[i][j] = EMPTY;
                     }
                 }
@@ -1954,7 +1785,7 @@
 
             // Sort by score
             validMoves.sort((a, b) => b.score - a.score);
-            
+
             // Pick from top moves based on difficulty
             let move;
             if (difficulty === 'easy') {
@@ -1976,22 +1807,22 @@
             }
 
             board[move.row][move.col] = WHITE;
-            
+
             const captures = checkCaptures(move.row, move.col, BLACK);
             if (captures.length > 0) {
                 captures.forEach(([r, c]) => {
                     board[r][c] = EMPTY;
                     whiteCaptures++;
                 });
-                
+
                 if (captures.length === 1 && !hasLiberties(move.row, move.col, WHITE)) {
                     koPosition = { row: captures[0][0], col: captures[0][1] };
                 } else {
                     koPosition = null;
                 }
-                
+
                 updateCaptures();
-                
+
                 // Capture messages based on difficulty
                 if (difficulty === 'hard' && captures.length > 1) {
                     showMessage(getRandomMessage('hardKill'));
@@ -2000,7 +1831,7 @@
                 }
             } else {
                 koPosition = null;
-                
+
                 // Context-aware messages based on difficulty and game phase
                 if (difficulty === 'easy') {
                     if (moveHistory.length < 10) {
@@ -2024,7 +1855,7 @@
                             }
                         }
                     }
-                    
+
                     if (threatening) {
                         showMessage(getRandomMessage('aggressive'));
                     } else if (moveHistory.length < 10) {
@@ -2049,22 +1880,22 @@
 
         function renderBoard() {
             const intersections = document.querySelectorAll('.intersection');
-            
+
             intersections.forEach(intersection => {
                 const row = parseInt(intersection.dataset.row);
                 const col = parseInt(intersection.dataset.col);
-                
+
                 // Clear existing stones
                 intersection.innerHTML = '';
-                
+
                 if (board[row][col] !== EMPTY) {
                     const stone = document.createElement('div');
                     stone.className = `stone ${board[row][col] === BLACK ? 'black' : 'white'}`;
-                    
+
                     if (lastMove && lastMove.row === row && lastMove.col === col) {
                         stone.classList.add('last-move');
                     }
-                    
+
                     intersection.appendChild(stone);
                 }
             });
@@ -2072,11 +1903,11 @@
 
         function playerPass() {
             if (!gameStarted || currentPlayer !== BLACK) return;
-            
+
             passCount++;
             showMessage("您虛手了，輪到我");
             currentPlayer = WHITE;
-            
+
             if (passCount >= 2) {
                 endGame();
             } else {
@@ -2088,7 +1919,7 @@
             passCount++;
             showMessage("我也虛手，對局結束！");
             currentPlayer = BLACK;
-            
+
             if (passCount >= 2) {
                 endGame();
             }
@@ -2096,17 +1927,17 @@
 
         function undoMove() {
             if (moveHistory.length < 2 || currentPlayer !== BLACK) return;
-            
+
             // Remove last two moves (AI and player)
             moveHistory.pop();
             moveHistory.pop();
-            
+
             // Rebuild board from history
             initBoard();
             for (const move of moveHistory) {
                 board[move.row][move.col] = move.player;
             }
-            
+
             renderBoard();
             showMessage("好的，讓您重新考慮");
             currentPlayer = BLACK;
@@ -2115,12 +1946,12 @@
         function calculateScore() {
             // Mark territories first
             const territoryMap = markTerritory();
-            
+
             let blackTerritory = 0;
             let whiteTerritory = 0;
             let blackStoneCount = 0;
             let whiteStoneCount = 0;
-            
+
             // Count stones and territories
             for (let i = 0; i < BOARD_SIZE; i++) {
                 for (let j = 0; j < BOARD_SIZE; j++) {
@@ -2137,11 +1968,11 @@
                     }
                 }
             }
-            
+
             // Calculate final scores using Chinese rules
             const blackTotal = blackTerritory + blackStoneCount + blackCaptures;
             const whiteTotal = whiteTerritory + whiteStoneCount + whiteCaptures + 6.5;
-            
+
             return {
                 black: {
                     territory: blackTerritory,
@@ -2163,14 +1994,14 @@
         function markTerritory() {
             const territory = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
             const visited = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(false));
-            
+
             // Find all empty regions and determine their owner
             for (let i = 0; i < BOARD_SIZE; i++) {
                 for (let j = 0; j < BOARD_SIZE; j++) {
                     if (board[i][j] === EMPTY && !visited[i][j]) {
                         const region = [];
                         const owner = floodFillTerritory(i, j, visited, region);
-                        
+
                         // Mark the region with the owner's color
                         for (const [r, c] of region) {
                             territory[r][c] = owner;
@@ -2178,7 +2009,7 @@
                     }
                 }
             }
-            
+
             // Second pass: For small enclosed areas, use proximity-based assignment
             for (let i = 0; i < BOARD_SIZE; i++) {
                 for (let j = 0; j < BOARD_SIZE; j++) {
@@ -2188,7 +2019,7 @@
                     }
                 }
             }
-            
+
             return territory;
         }
 
@@ -2196,29 +2027,29 @@
             const stack = [[startRow, startCol]];
             const touchingColors = new Set();
             const boundaryStones = [];
-            
+
             while (stack.length > 0) {
                 const [row, col] = stack.pop();
-                
+
                 if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) {
                     continue;
                 }
-                
+
                 if (visited[row][col]) continue;
-                
+
                 if (board[row][col] === EMPTY) {
                     visited[row][col] = true;
                     region.push([row, col]);
-                    
+
                     // Check all neighbors
                     const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
                     for (const [dr, dc] of neighbors) {
                         const newRow = row + dr;
                         const newCol = col + dc;
-                        
-                        if (newRow >= 0 && newRow < BOARD_SIZE && 
+
+                        if (newRow >= 0 && newRow < BOARD_SIZE &&
                             newCol >= 0 && newCol < BOARD_SIZE) {
-                            
+
                             if (board[newRow][newCol] !== EMPTY) {
                                 touchingColors.add(board[newRow][newCol]);
                                 boundaryStones.push({color: board[newRow][newCol], row: newRow, col: newCol});
@@ -2229,12 +2060,12 @@
                     }
                 }
             }
-            
+
             // If the region touches only one color, that player owns it
             if (touchingColors.size === 1) {
                 return touchingColors.values().next().value;
             }
-            
+
             // If region is small and mostly surrounded by one color, assign to that color
             if (region.length <= 4) {
                 let blackBoundary = 0;
@@ -2243,13 +2074,13 @@
                     if (stone.color === BLACK) blackBoundary++;
                     else whiteBoundary++;
                 }
-                
+
                 // If 75% or more of boundary is one color, assign to that color
                 const totalBoundary = blackBoundary + whiteBoundary;
                 if (blackBoundary >= totalBoundary * 0.75) return BLACK;
                 if (whiteBoundary >= totalBoundary * 0.75) return WHITE;
             }
-            
+
             // Otherwise it's neutral/disputed
             return EMPTY;
         }
@@ -2258,7 +2089,7 @@
             // Calculate influence based on nearby stones
             let blackInfluence = 0;
             let whiteInfluence = 0;
-            
+
             // Check in a 3x3 area around the point
             for (let dr = -2; dr <= 2; dr++) {
                 for (let dc = -2; dc <= 2; dc++) {
@@ -2275,16 +2106,16 @@
                     }
                 }
             }
-            
+
             // Assign to the color with more influence
             if (blackInfluence > whiteInfluence + 2) return BLACK;
             if (whiteInfluence > blackInfluence + 2) return WHITE;
-            
+
             // If influence is very close, check immediate neighbors only
             const neighbors = [[0,1], [1,0], [0,-1], [-1,0]];
             let blackNeighbors = 0;
             let whiteNeighbors = 0;
-            
+
             for (const [dr, dc] of neighbors) {
                 const nr = row + dr;
                 const nc = col + dc;
@@ -2293,30 +2124,30 @@
                     else if (board[nr][nc] === WHITE) whiteNeighbors++;
                 }
             }
-            
+
             if (blackNeighbors > whiteNeighbors) return BLACK;
             if (whiteNeighbors > blackNeighbors) return WHITE;
-            
+
             // Still can't decide - remain neutral
             return EMPTY;
         }
 
         function showTerritories(territoryMap) {
             // Remove old territory markers
-            document.querySelectorAll('.territoryOverlay').forEach(el => el.remove());
-            
+            document.querySelectorAll('.territory-overlay').forEach(el => el.remove());
+
             const boardElement = document.getElementById('board');
             if (!boardElement) return;
-            
+
             // Count territories for debugging
             let blackTerritoryCount = 0;
             let whiteTerritoryCount = 0;
-            
+
             for (let i = 0; i < BOARD_SIZE; i++) {
                 for (let j = 0; j < BOARD_SIZE; j++) {
                     if (board[i][j] === EMPTY && territoryMap[i][j] !== EMPTY) {
                         const overlay = document.createElement('div');
-                        overlay.className = `territoryOverlay ${territoryMap[i][j] === BLACK ? 'black-territory' : 'white-territory'}`;
+                        overlay.className = `territory-overlay ${territoryMap[i][j] === BLACK ? 'black-territory' : 'white-territory'}`;
                         overlay.style.position = 'absolute';
                         // Adjust positioning to center on intersection
                         overlay.style.left = `${(j / 12) * 100 - 3}%`;
@@ -2324,27 +2155,27 @@
                         overlay.style.width = '6%';
                         overlay.style.height = '6%';
                         boardElement.appendChild(overlay);
-                        
+
                         if (territoryMap[i][j] === BLACK) blackTerritoryCount++;
                         else if (territoryMap[i][j] === WHITE) whiteTerritoryCount++;
                     }
                 }
             }
-            
+
             console.log(`Territories marked - Black: ${blackTerritoryCount}, White: ${whiteTerritoryCount}`);
         }
 
         function clearTerritories() {
-            document.querySelectorAll('.territoryOverlay').forEach(el => el.remove());
+            document.querySelectorAll('.territory-overlay').forEach(el => el.remove());
         }
 
         function toggleExplanation() {
             const button = event.target;
-            const section = document.getElementById('explanationSection');
-            
+            const section = document.getElementById('explanation-section');
+
             button.classList.toggle('expanded');
             section.classList.toggle('show');
-            
+
             if (section.classList.contains('show')) {
                 button.textContent = '收起說明';
             } else {
@@ -2357,10 +2188,10 @@
             const scoreData = calculateScore();
             const winner = scoreData.black.total > scoreData.white.total ? 'black' : 'white';
             const difference = Math.abs(scoreData.black.total - scoreData.white.total);
-            
+
             // Show territories on the board
             showTerritories(scoreData.territoryMap);
-            
+
             gameCount++;
             if (winner === 'black') {
                 winCount++;
@@ -2376,51 +2207,51 @@
             // Auto-adjust difficulty if enabled
             adjustDifficultyAutomatically();
 
-            const modal = document.getElementById('endGameModal');
-            const finalScore = document.getElementById('finalScore');
-            const endMessage = document.getElementById('endMessage');
-            
+            const modal = document.getElementById('end-game-modal');
+            const finalScore = document.getElementById('final-score');
+            const endMessage = document.getElementById('end-message');
+
             // Update summary score
             finalScore.textContent = `黑: ${scoreData.black.total.toFixed(1)} 白: ${scoreData.white.total.toFixed(1)}`;
-            
+
             // Update detailed breakdown
-            document.querySelector('#blackTerritory .detailValue').textContent = `${scoreData.black.territory} 格`;
-            document.querySelector('#blackStones .detailValue').textContent = `${scoreData.black.stones} 子`;
-            document.querySelector('#blackCaptured .detailValue').textContent = `${scoreData.black.captures} 個`;
-            document.getElementById('blackTotal').textContent = scoreData.black.total.toFixed(1);
-            
-            document.querySelector('#whiteTerritory .detailValue').textContent = `${scoreData.white.territory} 格`;
-            document.querySelector('#whiteStones .detailValue').textContent = `${scoreData.white.stones} 子`;
-            document.querySelector('#whiteCaptured .detailValue').textContent = `${scoreData.white.captures} 個`;
-            document.getElementById('whiteTotal').textContent = scoreData.white.total.toFixed(1);
-            
+            document.querySelector('#black-territory .detail-value').textContent = `${scoreData.black.territory} 格`;
+            document.querySelector('#black-stones .detail-value').textContent = `${scoreData.black.stones} 子`;
+            document.querySelector('#black-captured .detail-value').textContent = `${scoreData.black.captures} 個`;
+            document.getElementById('black-total').textContent = scoreData.black.total.toFixed(1);
+
+            document.querySelector('#white-territory .detail-value').textContent = `${scoreData.white.territory} 格`;
+            document.querySelector('#white-stones .detail-value').textContent = `${scoreData.white.stones} 子`;
+            document.querySelector('#white-captured .detail-value').textContent = `${scoreData.white.captures} 個`;
+            document.getElementById('white-total').textContent = scoreData.white.total.toFixed(1);
+
             // Personality-based end messages
             let personalityText = "";
             if (difficulty === 'easy') {
-                personalityText = winner === 'black' ? 
-                    "您贏了！我的和平策略沒成功呢" : 
+                personalityText = winner === 'black' ?
+                    "您贏了！我的和平策略沒成功呢" :
                     "我靠著穩定的地盤贏了，但您下得很好！";
             } else if (difficulty === 'medium') {
-                personalityText = winner === 'black' ? 
-                    "精彩的對局！您的策略更勝一籌！" : 
+                personalityText = winner === 'black' ?
+                    "精彩的對局！您的策略更勝一籌！" :
                     "這次我贏了，但對局很精彩！";
             } else {
-                personalityText = winner === 'black' ? 
-                    "您在激烈的戰鬥中獲勝了！真厲害！" : 
+                personalityText = winner === 'black' ?
+                    "您在激烈的戰鬥中獲勝了！真厲害！" :
                     "激烈的戰鬥後，我險勝了！";
             }
-            
+
             if (winner === 'black') {
                 endMessage.textContent = `${personalityText} 您贏了${difference.toFixed(1)}目！今日戰績: ${winCount}勝${lossCount}負`;
             } else {
                 endMessage.textContent = `${personalityText} 我贏了${difference.toFixed(1)}目。今日戰績: ${winCount}勝${lossCount}負`;
             }
-            
+
             modal.classList.add('active');
         }
 
         function newGame() {
-            document.getElementById('endGameModal').classList.remove('active');
+            document.getElementById('end-game-modal').classList.remove('active');
 
             // Clear territory markings from previous game
             clearTerritories();
@@ -2432,14 +2263,14 @@
             // Update session tracking
             sessionGames++;
             updateSessionInfo();
-            
+
             // Reset explanation section
-            const explanationSection = document.getElementById('explanationSection');
-            const expandButton = document.querySelector('.expandButton');
+            const explanationSection = document.getElementById('explanation-section');
+            const expandButton = document.querySelector('.expand-button');
             explanationSection.classList.remove('show');
             expandButton.classList.remove('expanded');
             expandButton.textContent = '瞭解計分方式';
-            
+
             if (gameCount > 0 && gameCount % 5 === 0) {
                 showMessage("您今天下了5局了，要不要休息一下？");
             } else {
@@ -2448,17 +2279,17 @@
         }
 
         function takeBreak() {
-            document.getElementById('endGameModal').classList.remove('active');
+            document.getElementById('end-game-modal').classList.remove('active');
             clearTerritories();
-            document.getElementById('gameScreen').classList.remove('active');
-            document.getElementById('welcomeScreen').style.display = 'block';
-            
-            const welcomeMessage = document.querySelector('.welcomeMessage');
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('welcome-screen').style.display = 'block';
+
+            const welcomeMessage = document.querySelector('.welcome-message');
             welcomeMessage.innerHTML = `歡迎回來！<br>今日戰績: ${winCount}勝${lossCount}負<br>準備好再來一局了嗎？`;
         }
 
         function showMessage(message) {
-            document.getElementById('aiMessage').textContent = message;
+            document.getElementById('ai-message').textContent = message;
         }
 
         function getRandomMessage(category) {
@@ -2467,13 +2298,13 @@
         }
 
         function updateCaptures() {
-            document.getElementById('blackCaptures').textContent = blackCaptures;
-            document.getElementById('whiteCaptures').textContent = whiteCaptures;
+            document.getElementById('black-captures').textContent = blackCaptures;
+            document.getElementById('white-captures').textContent = whiteCaptures;
         }
 
         function startGame() {
-            document.getElementById('welcomeScreen').style.display = 'none';
-            document.getElementById('gameScreen').classList.add('active');
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('game-screen').classList.add('active');
 
             initBoard();
             createBoard();
@@ -2496,15 +2327,15 @@
             if (gameCount === 0) {
                 difficultyAdjustment = true;
             }
-            
+
             // Initialize settings UI
-            const gridCheckbox = document.querySelector('.gridToggle input');
+            const gridCheckbox = document.querySelector('.grid-toggle input');
             if (gridCheckbox) {
                 gridCheckbox.checked = gridEnabled;
             }
-            
+
             // Set initial difficulty buttons and hint
-            document.querySelectorAll('.diffButton').forEach((btn, index) => {
+            document.querySelectorAll('.diff-button').forEach((btn, index) => {
                 btn.classList.remove('active');
                 if ((difficulty === 'easy' && index === 0) ||
                     (difficulty === 'medium' && index === 1) ||
@@ -2512,10 +2343,10 @@
                     btn.classList.add('active');
                 }
             });
-            
+
             // Set board style based on difficulty
             updateBoardStyle();
-            
+
             if (gameCount === 0) {
                 showMessage("您執黑子，請先下！觸碰任何交叉點落子。");
             } else {

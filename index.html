@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>迷你棋盤遊戲</title>
+    <link rel="stylesheet" href="shared-styles.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow-button: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        body {
+            justify-content: flex-start;
+            padding-top: 4vh;
+        }
+
+        #main-container {
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            padding: 0 var(--spacing-sm);
+        }
+
+        .page-title {
+            font-size: clamp(2rem, 8vw, 2.5rem);
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+            font-weight: bold;
+        }
+
+        .page-subtitle {
+            font-size: clamp(1rem, 4vw, 1.125rem);
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-lg);
+            line-height: 1.6;
+        }
+
+        #game-selection {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+            width: 100%;
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-md);
+            text-decoration: none;
+            color: var(--text-primary);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .game-card h2 {
+            font-size: var(--font-size-xl);
+            font-weight: bold;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .game-card p {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            line-height: 1.5;
+            max-width: 250px;
+        }
+        
+        .game-icon {
+            font-size: 2.5rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        /* Card-specific styles to hint at the game */
+        .game-card.go {
+            border-top: 5px solid #764ba2;
+        }
+
+        .game-card.gomoku {
+            border-top: 5px solid #059669;
+        }
+
+        @media (min-width: 500px) {
+            #game-selection {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="main-container">
+        <header>
+            <h1 class="page-title">迷你棋盤遊戲</h1>
+            <p class="page-subtitle">兩款經典的策略棋盤遊戲，<br>專為現代網頁和移動設備設計。</p>
+        </header>
+
+        <main id="game-selection">
+            <a href="gomoku-game-chinese.html" class="game-card gomoku">
+                <div class="game-icon">⚪️</div>
+                <h2>五子棋</h2>
+                <p>簡單易學的連珠遊戲，首先將五個棋子連成一線者獲勝。</p>
+            </a>
+            <a href="go-game-chinese.html" class="game-card go">
+                <div class="game-icon">⚫️</div>
+                <h2>圍棋</h2>
+                <p>古老而深邃的策略遊戲，目標是佔領比對手更多的領土。</p>
+            </a>            
+        </main>
+    </div>
+</body>
+</html>

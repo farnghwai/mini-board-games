@@ -1,0 +1,352 @@
+/* Shared Styles for Mini Board Games
+   Common CSS variables and styles used by all games
+   Game-specific overrides should be defined in individual HTML files */
+
+:root {
+    /* Background and Surface Colors */
+    --primary-bg: linear-gradient(135deg, #f5f5dc 0%, #e8ddc0 100%);
+    --card-bg: white;
+    --card-shadow: 0 4px 15px rgba(0,0,0,0.1);
+
+    /* Text Colors */
+    --text-primary: #4a4a4a;
+    --text-secondary: #666;
+
+    /* Layout */
+    --border-radius: 0.9375rem; /* 15px */
+    --touch-target: max(2.75rem, 44px);
+
+    /* Difficulty Colors */
+    --difficulty-easy: #4CAF50;    /* Green */
+    --difficulty-medium: #FF9800;   /* Orange */
+    --difficulty-hard: #F44336;     /* Red */
+
+    /* Spacing variables */
+    --spacing-xs: 10px;
+    --spacing-sm: 15px;
+    --spacing-md: 20px;
+    --spacing-lg: 30px;
+    --spacing-xl: 40px;
+
+    /* Font size variables */
+    --font-size-sm: 16px;
+    --font-size-md: 20px;
+    --font-size-lg: 22px;
+    --font-size-xl: 28px;
+
+    /* Border radius variables */
+    --border-radius-sm: 10px;
+    --border-radius-md: 15px;
+    --border-radius-lg: 25px;
+
+    /* Shadow variables */
+    --shadow-board: 0 4px 20px rgba(0,0,0,0.2);
+    --shadow-stone-black: 0.125rem 0.125rem 0.25rem rgba(0,0,0,0.5);
+    --shadow-stone-white: 0.125rem 0.125rem 0.25rem rgba(0,0,0,0.3);
+
+    /* Board specific variables */
+    --board-surface: #f4d03f;
+    --modal-overlay: #2a2a2a;
+
+    /* Game content width - drives alignment of header, board, and footer */
+    /* Account for header/footer/gaps/padding: 300px total */
+    --game-content-width: min(400px, 80vh, calc(100vh - 300px));
+}
+
+/* Base Reset and Typography */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    font-size: clamp(14px, 4vw, 18px);
+    min-height: 100vh;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "微軟正黑體", sans-serif;
+    background: var(--primary-bg);
+    height: 100vh;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xs);
+    touch-action: manipulation;
+    user-select: none;
+    margin: 0;
+}
+
+/* Main Game Container */
+#game-container {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+}
+
+/* Welcome Screen */
+#welcome-screen {
+    text-align: center;
+    padding: var(--spacing-lg) var(--spacing-md);
+    background: var(--card-bg);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--card-shadow);
+}
+
+.welcome-title {
+    font-size: var(--font-size-xl);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+    font-weight: bold;
+}
+
+.welcome-message {
+    font-size: var(--font-size-md);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.6;
+}
+
+.start-button {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-sm) var(--spacing-xl);
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: var(--shadow-button);
+    transition: transform 0.2s;
+}
+
+.start-button:active {
+    transform: scale(0.95);
+}
+
+.start-button:focus-visible {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
+}
+
+/* Game Screen */
+#game-screen {
+    display: none;
+    flex-direction: column;
+    height: auto;
+    overflow: hidden;
+    gap: clamp(0.5rem, 2vw, 1rem);
+}
+
+#game-screen.active {
+    display: flex;
+}
+
+/* Game Layout Components */
+.game-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    width: 100%;
+    max-width: var(--game-content-width);
+    margin: 0 auto;
+}
+
+.game-board-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-height: 0;
+}
+
+.game-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    flex-shrink: 0;
+    width: 100%;
+    max-width: var(--game-content-width);
+    margin: 0 auto;
+}
+
+/* Message Area */
+#message-area {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: clamp(0.5rem, 2vw, 0.75rem);
+    min-height: clamp(2.5rem, 6vw, 3rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#ai-message {
+    font-size: clamp(0.875rem, 3.5vw, 1.125rem);
+    color: var(--text-primary);
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* Session Information */
+#session-info {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: clamp(0.75rem, 3vw, 0.875rem);
+}
+
+/* Control Buttons Base */
+.control-button {
+    padding: clamp(0.75rem, 3vw, 1rem) clamp(1.25rem, 4vw, 2rem);
+    font-size: clamp(0.875rem, 3.5vw, 1.125rem);
+    font-weight: bold;
+    border: none;
+    border-radius: var(--border-radius);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+    min-height: var(--touch-target);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-button:active {
+    transform: scale(0.95);
+}
+
+.control-button:focus-visible {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
+}
+
+/* Removed unused .control-button.start - games use .start-button instead */
+
+.control-button.restart {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.control-button.new-session {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Board Container */
+#board-container {
+    background: var(--board-bg);
+    border-radius: var(--border-radius-sm);
+    padding: clamp(0.5rem, 2vw, 0.75rem);
+    position: relative;
+    width: 100%; /* Use full width of container */
+    max-width: var(--game-content-width); /* Consistent with header/footer width */
+    aspect-ratio: 1;
+    container-type: inline-size;
+    transition: background 0.3s ease; /* Supports Go's difficulty changes */
+    margin: 0 auto; /* Center when max-width applies */
+}
+
+/* Responsive Design - Small Screens */
+@media (max-width: 400px) {
+    #game-container {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+}
+
+/* Responsive Design - Very Small Screens */
+@media (max-width: 320px) {
+    :root {
+        --touch-target: max(2.5rem, 40px);
+    }
+
+    #game-container {
+        max-width: 500px;
+    }
+}
+
+/* Large screens */
+@media (min-width: 768px) {
+    :root {
+        --game-content-width: min(500px, 80vh, calc(100vh - 300px));
+    }
+
+    #game-container {
+        max-width: 500px;
+    }
+
+    .game-board-area {
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* #board-container now uses consistent max-width via CSS variable */
+}
+
+/* Accessibility - Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --card-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        --text-primary: #000000;
+        --text-secondary: #333333;
+    }
+}
+
+/* Compact mode for small height screens */
+@media (max-height: 650px) {
+    #game-container {
+        gap: 0.25rem;
+    }
+
+    .game-header, .game-footer {
+        gap: 0.25rem;
+    }
+
+    #message-area {
+        min-height: 2.5rem;
+        padding: 0.5rem;
+    }
+
+    #session-info {
+        font-size: 0.75rem;
+    }
+}
+
+/* Extra compact mode for very short viewports */
+@media (max-height: 550px) {
+    :root {
+        --game-content-width: min(400px, calc(100vh - 300px));
+    }
+
+    #game-screen {
+        gap: 0.5rem;
+    }
+
+    .game-header, .game-footer {
+        gap: 0.25rem;
+    }
+}
