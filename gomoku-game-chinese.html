@@ -259,14 +259,15 @@
             }
         }
 
-        @media (max-height: 540px) {
+        @media (max-width: 260px), (max-height: 540px) {
             :root {
-                --game-content-width: calc(13 * 16px + 0.25rem + 2 * clamp(0.5rem, 2vw, 0.75rem));
-            }
+                --min-game-content-width: max(calc(13 * 16px + 0.25rem + 2 * clamp(0.5rem, 2vw, 0.75rem)), 260px);
+                --game-content-width: var(--min-game-content-width);
+            }            
 
             #board-container {
-                min-width: calc(13 * 16px + 0.25rem + 2 * clamp(0.5rem, 2vw, 0.75rem));
-                min-height: calc(13 * 16px + 0.25rem + 2 * clamp(0.5rem, 2vw, 0.75rem));
+                min-width: var(--min-game-content-width);
+                min-height: var(--min-game-content-width);
             }
         }
 
@@ -333,12 +334,12 @@
 
             <div class="game-footer">
                 <div id="controls">
-                    <button class="control-button inline restart hidden" onclick="startNewGame()">再來一局</button>
-                    <button class="control-button inline new-session hidden" onclick="newSession()">新局</button>
+                    <button class="control-button inline restart" onclick="startNewGame()">再來一局</button>
+                    <button class="control-button inline reset-score" onclick="resetScore()">重置分數</button>
                 </div>
 
                 <div id="session-info">
-                    第 <span id="session-games">0</span> 局 • 今日已玩 <span id="total-games">0</span> 局
+                    今日已玩 <span id="total-games">0</span> 局
                 </div>
             </div>
         </div>
@@ -352,7 +353,6 @@
         let gameActive = false;
         let isProcessing = false;
         let score = { player: 0, npc: 0 };
-        let sessionGames = 0;
         let totalGamesToday = 0;
         let lastMove = null;
         let winningLine = null;
@@ -866,40 +866,26 @@
 
         // Update session info
         function updateSessionInfo() {
-            document.getElementById('session-games').textContent = sessionGames;
             document.getElementById('total-games').textContent = totalGamesToday;
         }
 
         // Show appropriate end buttons
         function showEndButtons() {
             const restartButton = document.querySelector('#controls .restart');
-            const newSessionButton = document.querySelector('#controls .new-session');
+            const resetScoreButton = document.querySelector('#controls .reset-score');
 
-            // Hide both buttons first
-            restartButton.classList.remove('show');
-            newSessionButton.classList.remove('show');
-
-            if (sessionGames < 5) {
-                restartButton.classList.add('show');
-            } else {
-                newSessionButton.classList.add('show');
-                // End session message
-                setTimeout(() => {
-                    showMessage(
-                        `今日戰績：您贏了${score.player}局，我贏了${score.npc}局。` +
-                        `謝謝陪我下棋！點擊「新局」可以再玩。`
-                    );
-                }, 2000);
-            }
+            // Show both buttons
+            restartButton.classList.add('show');
+            resetScoreButton.classList.add('show');
         }
 
         // Hide end buttons from game actions
         function hideEndButtons() {
             const restartButton = document.querySelector('#controls .restart');
-            const newSessionButton = document.querySelector('#controls .new-session');
+            const resetScoreButton = document.querySelector('#controls .reset-score');
 
             restartButton.classList.remove('show');
-            newSessionButton.classList.remove('show');
+            resetScoreButton.classList.remove('show');
         }
 
         // Start first game
@@ -926,7 +912,6 @@
             initBoard();
             gameActive = true;
             isProcessing = false;
-            sessionGames++;
 
             // Note: totalGamesToday is now incremented only when games are completed (won)
 
@@ -938,29 +923,21 @@
             // Show greeting
             showMessage(getLocalResponse('greetings'));
 
-            // Special messages
-            if (sessionGames === 1 && totalGamesToday === 1) {
+            // Special welcome message for first game of the day
+            if (totalGamesToday === 1) {
                 const hour = new Date().getHours();
                 const timeOfDay = hour < 12 ? '早上' : hour < 17 ? '下午' : '晚上';
                 showMessage(`${timeOfDay}好！歡迎來玩五子棋！您執黑子先下。`);
-            } else if (sessionGames > 3) {
-                showMessage("您真有耐心！這是第" + sessionGames + "局了，您先下！");
             }
         }
 
-        // New session
-        function newSession() {
-            // Reset session
-            sessionGames = 0;
+
+        // Reset score
+        function resetScore() {
             score = { player: 0, npc: 0 };
             updateScore();
-
-            // Show welcome screen again
-            document.getElementById('game-screen').classList.remove('active');
-            document.getElementById('welcome-screen').style.display = 'block';
-
-            const welcomeMessage = document.querySelector('.welcome-message');
-            welcomeMessage.innerHTML = `歡迎回來！<br>今日戰績已重置<br>準備好再來一局了嗎？`;
+            showMessage("分數已重置，開始新的對戰！");
+            startNewGame();
         }
 
         // Initialize on load
