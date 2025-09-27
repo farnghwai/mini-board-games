@@ -72,6 +72,12 @@
 
 
         /* #board-container styles now in shared-styles.css */
+        #board-wrapper {
+            height: 100%;
+            width: 100%;
+            position: relative;
+            padding: calc(0.8rem - clamp(0.5rem, 2vw, 0.75rem));
+        }
 
         #board-container.easy-mode {
             background: linear-gradient(135deg, var(--board-easy-start) 0%, var(--board-bg) 100%);
@@ -124,7 +130,14 @@
             position: relative;
             transition: opacity 0.3s, transform 0.2s;
             pointer-events: none;
-        }
+        }   
+        
+        @container (max-width: 300px) {
+            .stone {
+                width: max(70%, 12px);
+                height: max(70%, 12px);
+            }
+        }        
 
         .stone.black {
             background: var(--stone-black-gradient);
@@ -864,14 +877,14 @@
             }
         }
 
-        @media (max-height: 540px) {
+        @media (max-width: 260px), (max-height: 540px) {
             :root {
                 --game-content-width: 241px;
             }
 
             #board-container {
-                min-width: 241px;
-                min-height: 241px;
+                min-width: var(--game-content-width);
+                min-height: var(--game-content-width);
             }
         }           
 
@@ -953,9 +966,9 @@
                     <div class="difficulty-group">
                         <span class="diff-label">難度</span>
                         <div class="diff-button-group" role="group" aria-label="難度選擇">
-                            <button class="diff-button active" data-difficulty="easy" onclick="changeDifficulty('easy')"
+                            <button class="diff-button" data-difficulty="easy" onclick="changeDifficulty('easy')"
                                     title="簡單模式" aria-label="簡單難度">易</button>
-                            <button class="diff-button" data-difficulty="medium" onclick="changeDifficulty('medium')"
+                            <button class="diff-button active" data-difficulty="medium" onclick="changeDifficulty('medium')"
                                     title="中等難度" aria-label="中等難度">中</button>
                             <button class="diff-button" data-difficulty="hard" onclick="changeDifficulty('hard')"
                                     title="困難模式" aria-label="困難難度">難</button>
@@ -970,7 +983,9 @@
 
             <div class="game-board-area">
                 <div id="board-container">
-                    <div id="board"></div>
+                    <div id="board-wrapper">
+                        <div id="board"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1109,7 +1124,7 @@
         let sessionGames = 0;
         let totalGamesToday = 0;
         let gridEnabled = true;
-        let difficulty = 'easy'; // easy, medium, hard
+        let difficulty = 'medium'; // easy, medium, hard
         let difficultyAdjustment = true; // Auto-adjust difficulty based on performance
 
         // Update session information display
